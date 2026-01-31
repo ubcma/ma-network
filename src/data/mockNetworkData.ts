@@ -4,6 +4,7 @@ export interface PastExperience {
   desc: string;
 }
 
+
 export interface NetworkProfile {
   id: string;
   first_name: string;
