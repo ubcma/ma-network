@@ -17,6 +17,9 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
   const maPosition = profile.ma_role?.position?.trim();
   const maPortfolio = profile.ma_role?.portfolio?.trim();
 
+    const id = new URLSearchParams(new URL(profile.profile_photo_url ?? "", window.location.href).search).get("id");
+  const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -26,7 +29,7 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
             <div className="w-12 h-12 rounded-full bg-primary/10 ring-1 ring-primary/20 overflow-hidden flex items-center justify-center shrink-0">
               {profile.profile_photo_url ? (
                 <img
-                  src={profile.profile_photo_url}
+                  src={photoUrl}
                   alt={`${profile.first_name} ${profile.last_name}`}
                   className="w-full h-full object-cover"
                   loading="lazy"

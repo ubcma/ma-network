@@ -18,6 +18,9 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
   const currentRole = profile.current_role?.trim();
   const currentCompany = profile.current_company?.trim();
 
+  const id = new URLSearchParams(new URL(profile.profile_photo_url ?? "", window.location.href).search).get("id");
+  const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
+
   return (
     <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={onClick}>
       <div className="flex items-start gap-4">
@@ -25,7 +28,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
         <div className="w-16 h-16 rounded-full bg-primary/10 ring-1 ring-primary/20 shrink-0 overflow-hidden flex items-center justify-center">
           {profile.profile_photo_url ? (
             <img
-              src={profile.profile_photo_url}
+              src={photoUrl}
               alt={`${profile.first_name} ${profile.last_name}`}
               className="w-full h-full object-cover"
               loading="lazy"
