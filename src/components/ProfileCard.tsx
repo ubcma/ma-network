@@ -2,7 +2,7 @@ import { type NetworkProfile } from "@/utils/networkProfileUtils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MessageCircle, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface ProfileCardProps {
   profile: NetworkProfile;
@@ -25,7 +25,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
     <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={onClick}>
       <div className="flex items-start gap-4">
         {/* Avatar / Photo */}
-        <div className="w-16 h-16 rounded-full bg-primary/10 ring-1 ring-primary/20 shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-primary/10 ring-1 ring-primary/20 shrink-0 overflow-hidden flex items-center justify-center mt-0.5">
           {profile.profile_photo_url ? (
             <img
               src={photoUrl}
@@ -49,9 +49,21 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
               </h3>
 
               <div className="flex flex-wrap gap-2 mt-1">
-                <Badge variant={profile.contact_type === "alumni" ? "default" : "secondary"}>
-                  {profile.contact_type === "alumni" ? "Alumni" : "Executive"}
+                
+                <Badge variant={profile.contact_type === "alumni" ? "default" : "secondary"}
+                      className="bg-[#f04362] text-white hover:bg-[#f04362]/90">
+                  {profile.contact_type === "alumni" ? "Alumni" : "Executive"} 
                 </Badge>
+
+                {profile.open_to_contact ? (
+                  <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-100">
+                    Open to contact
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-gray-200">
+                    Not available
+                  </span>
+                )}
 
                 {/* MA role (position + portfolio) */}
                 {maPosition ? (
@@ -66,7 +78,6 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
 
           {/* Current Position (role @ company) */}
           <div className="flex items-start gap-2 mb-2 text-sm">
-            <Briefcase className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
             <div className="min-w-0">
               <p className="font-medium truncate">
                 {currentRole ? currentRole : "—"}
@@ -82,7 +93,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
             </div>
           </div>
 
-          {/* Portfolio callout (optional, clearer than badge if you want it) */}
+
           {maPortfolio ? (
             <div className="flex items-start gap-2 mb-2 text-sm">
               <Users className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
@@ -91,6 +102,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
               </p>
             </div>
           ) : null}
+        
 
           {/* Bio */}
           {profile.bio ? (
@@ -113,25 +125,17 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
             </div>
           )}
 
-          {/* Contact Status */}
-          <div className="flex items-center justify-between">
-            {profile.open_to_contact ? (
-              <div className="flex items-center gap-1 text-green-600 text-sm">
-                <MessageCircle className="w-4 h-4" />
-                <span>Open to contact</span>
-              </div>
-            ) : (
-              <div className="text-gray-500 text-sm">Not available for contact</div>
-            )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-              }}
-            >
+          {/* Footer */}
+            <div className="mt-3 pt-3 border-t flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                }}
+              >
               View Profile
             </Button>
           </div>
