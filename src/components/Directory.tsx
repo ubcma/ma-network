@@ -222,7 +222,7 @@ export function Directory() {
       <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100">
         {viewMode === "graph" ? (
           <div className="relative w-fit h-fit">
-            <Card className="absolute z-100 top-2 right-6 p-2 bg-white backdrop-blur border-0 shadow-sm ring-1 ring-gray-100">
+            <Card className="absolute z-5 top-2 right-6 p-2 bg-white backdrop-blur border-0 shadow-sm ring-1 ring-gray-100">
               <div className="flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Info className="w-4 h-4 text-muted-foreground" />
