@@ -1,4 +1,4 @@
-import { type NetworkProfile } from '@/data/mockNetworkData';
+import { type NetworkProfile } from './networkProfileUtils';
 
 export interface GraphNode {
   id: string;

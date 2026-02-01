@@ -4,66 +4,109 @@ import { NetworkGraph } from "@/components/NetworkGraph";
 import { SearchBar } from "@/components/SearchBar";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetail } from "@/components/ProfileDetail";
-import {
-  mockProfiles,
-  getAllCompanies,
-  getAllRoles,
-  getAllTopics,
-  type NetworkProfile,
-} from "@/data/mockNetworkData";
+import { Network, Users, Info, List } from "lucide-react";
+
+import { fetchPublicGoogleSheet } from "@/queries/googleSheets";
+import { googleSheetToProfiles } from "@/utils/googleSheetToProfiles";
+import type { NetworkProfile } from "@/utils/networkProfileUtils";
+
 import {
   generateGraphData,
   searchProfiles,
   type GraphNode,
 } from "@/utils/graphUtils";
-import { Network, Users, Info, List } from "lucide-react";
+
+function uniqSorted(values: string[]) {
+  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+function getAllCompaniesFromProfiles(profiles: NetworkProfile[]) {
+  return uniqSorted(profiles.map((p) => p.current_company ?? ""));
+}
+
+function getAllRolesFromProfiles(profiles: NetworkProfile[]) {
+  return uniqSorted(profiles.map((p) => p.current_role ?? ""));
+}
+
+function getAllTopicsFromProfiles(profiles: NetworkProfile[]) {
+  // hobbies already includes hobbies + expertise from your transformer
+  return uniqSorted(profiles.flatMap((p) => p.hobbies ?? []));
+}
 
 export function Directory() {
+
+  const [profiles, setProfiles] = useState<NetworkProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // filtering 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterTopic, setFilterTopic] = useState("");
   const [filterContactType, setFilterContactType] = useState("");
-  const [selectedProfile, setSelectedProfile] = useState<NetworkProfile | null>(
-    null,
-  );
+
+  const [selectedProfile, setSelectedProfile] = useState<NetworkProfile | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [graphDimensions, setGraphDimensions] = useState({
-    width: 800,
-    height: 600,
-  });
+
+
+  const [graphDimensions, setGraphDimensions] = useState({ width: 800, height: 600 });
   const [viewMode, setViewMode] = useState<"graph" | "list">("list");
 
-  // Get unique values for filters
-  const companies = useMemo(() => getAllCompanies(), []);
-  const roles = useMemo(() => getAllRoles(), []);
-  const topics = useMemo(() => getAllTopics(), []);
 
-  // Filter profiles based on search and filters
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const rows = await fetchPublicGoogleSheet();
+        const parsedProfiles = googleSheetToProfiles(rows);
+
+        if (!cancelled) setProfiles(parsedProfiles);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        if (!cancelled) setError(msg);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // get all memoized options from the network profiles 
+  const companies = useMemo(() => getAllCompaniesFromProfiles(profiles), [profiles]);
+  const roles = useMemo(() => getAllRolesFromProfiles(profiles), [profiles]);
+  const topics = useMemo(() => getAllTopicsFromProfiles(profiles), [profiles]);
+
   const filteredProfiles = useMemo(() => {
     const normalizedCompany = filterCompany === "all" ? "" : filterCompany;
     const normalizedRole = filterRole === "all" ? "" : filterRole;
     const normalizedTopic = filterTopic === "all" ? "" : filterTopic;
-    const normalizedContactType =
-      filterContactType === "all" ? "" : filterContactType;
+    const normalizedContactType = filterContactType === "all" ? "" : filterContactType;
 
     return searchProfiles(
-      mockProfiles,
+      profiles,
       searchTerm,
       normalizedCompany,
       normalizedRole,
       normalizedTopic,
       normalizedContactType,
     );
-  }, [searchTerm, filterCompany, filterRole, filterTopic, filterContactType]);
+  }, [profiles, searchTerm, filterCompany, filterRole, filterTopic, filterContactType]);
 
-  // Generate graph data from filtered profiles
-  const graphData = useMemo(
-    () => generateGraphData(filteredProfiles),
-    [filteredProfiles],
-  );
 
-  // Handle node click from graph
+  const graphData = useMemo(() => generateGraphData(filteredProfiles), [filteredProfiles]);
+
+
   const handleNodeClick = (node: GraphNode) => {
     if (node.profile) {
       setSelectedProfile(node.profile);
@@ -71,19 +114,14 @@ export function Directory() {
     }
   };
 
-  // Handle profile card click
   const handleProfileCardClick = (profile: NetworkProfile) => {
     setSelectedProfile(profile);
     setIsProfileOpen(true);
   };
-
-  // Update graph dimensions on window resize
   useEffect(() => {
     const updateDimensions = () => {
-      // Adjust width based on sidebar (approx 256px) and padding
       const containerWidth =
-        document.getElementById("directory-container")?.clientWidth ||
-        window.innerWidth;
+        document.getElementById("directory-container")?.clientWidth || window.innerWidth;
       const width = Math.min(containerWidth - 48, 1400);
       const height = Math.min(window.innerHeight - 300, 700);
       setGraphDimensions({ width, height });
@@ -94,16 +132,25 @@ export function Directory() {
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
+
+  if (loading) return <div className="p-6 text-gray-600">Loading directory…</div>;
+
+  if (error)
+    return (
+      <div className="p-6">
+        <div className="text-red-600 font-medium">Couldn’t load directory</div>
+        <div className="text-gray-600 mt-2 text-sm">{error}</div>
+      </div>
+    );
+
   return (
     <div className="space-y-6" id="directory-container">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-            Directory
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Directory</h2>
           <p className="text-muted-foreground mt-1">
-            Connect with {filteredProfiles.length} alumni and executives
+            Connect with UBCMA alumni and executives!
           </p>
         </div>
 
@@ -163,15 +210,15 @@ export function Directory() {
               <span className="font-medium text-sm text-gray-700">Legend:</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#e11d48] ring-2 ring-red-100"></div>
+              <div className="w-3 h-3 rounded-full bg-[#e11d48] ring-2 ring-red-100" />
               <span className="text-sm text-gray-600">Alumni</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#374151] ring-2 ring-gray-200"></div>
+              <div className="w-3 h-3 rounded-full bg-[#374151] ring-2 ring-gray-200" />
               <span className="text-sm text-gray-600">Executive</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#94a3b8] ring-2 ring-slate-100"></div>
+              <div className="w-3 h-3 rounded-full bg-[#94a3b8] ring-2 ring-slate-100" />
               <span className="text-sm text-gray-600">Company</span>
             </div>
           </div>

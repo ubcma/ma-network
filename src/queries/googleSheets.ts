@@ -1,15 +1,29 @@
-const GOOGLE_SHEETS_URL = `https://docs.google.com/spreadsheets/d/1Bk0d_WZjTZ2Oaw74lauO0WONHlH6Ya-O0g8NVetlp4Q/export?format=csv&gid=1346626676#gid=1346626676`
+import Papa from "papaparse";
+import { GOOGLE_SHEETS_URL} from "@/lib/constants";
 
-export async function fetchPublicGoogleSheet() {
-  
-  const response = await fetch(GOOGLE_SHEETS_URL);
+
+export async function fetchPublicGoogleSheet(): Promise<string[][]> {
+  const response = await fetch(GOOGLE_SHEETS_URL, {
+
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Google Sheet CSV (${response.status})`);
+  }
+
   const csvText = await response.text();
-  
-  const rows = csvText.split('\n').map(row => 
-    row.split(',').map(cell => cell.trim())
-  );
-  
+
+  const parsed = Papa.parse<string[]>(csvText, {
+    skipEmptyLines: true,
+  });
+
+  if (parsed.errors?.length) {
+
+    throw new Error(`CSV parse error: ${parsed.errors[0].message}`);
+  }
+
+
+  const rows = (parsed.data ?? []).map((row) => row.map((c) => (c ?? "").trim()));
   return rows;
 }
-
-// spreadsheetId: string, gid: string = '0'
