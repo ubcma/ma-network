@@ -1,4 +1,4 @@
-import { type NetworkProfile } from './networkProfileUtils';
+import { type NetworkProfile, type PastExperience } from './networkProfileUtils';
 
 export interface GraphNode {
   id: string;
@@ -6,6 +6,7 @@ export interface GraphNode {
   type: 'person' | 'company';
   profile?: NetworkProfile;
   company?: string;
+  past_experience: PastExperience[];
   color?: string;
   val?: number;
   photo?: string;
@@ -38,6 +39,7 @@ export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
       type: 'person',
       profile: profile,
       company: profile.current_company,
+      past_experience: profile.past_experience,
       color: profile.contact_type === 'alumni' ? '#e11d48' : '#374151',
       val: 8,
       photo: photoUrl

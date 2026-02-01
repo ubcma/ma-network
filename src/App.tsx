@@ -1,21 +1,6 @@
-import { useEffect, useState } from "react";
 import { Directory } from "@/components/Directory";
-import { fetchPublicGoogleSheet } from "./queries/googleSheets";
 
 export default function App() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [data, setData] = useState<string[][]>([])
-
-  useEffect(() => {
-
-    async function fetchData() {
-      const googleSheetData = await fetchPublicGoogleSheet();
-      setData(googleSheetData)
-    }
-
-    fetchData();
-
-  }, [])
 
   return (
     <div className="min-h-screen bg-secondary/50 font-sans">

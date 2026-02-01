@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback } from "react";
 import ReactFlow, {
   type Node,
   type Edge,
@@ -6,13 +6,18 @@ import ReactFlow, {
   useEdgesState,
   Background,
   Controls,
-  MiniMap,
   ConnectionMode,
   type NodeProps,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force';
-import { type GraphData, type GraphNode } from '@/utils/graphUtils';
+} from "reactflow";
+import "reactflow/dist/style.css";
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+} from "d3-force";
+import { type GraphData, type GraphNode } from "@/utils/graphUtils";
+import type { PastExperience } from "@/utils/networkProfileUtils";
 
 interface NetworkGraphProps {
   data: GraphData;
@@ -23,16 +28,16 @@ interface NetworkGraphProps {
 
 function PersonNode({ data }: NodeProps) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       <div
         style={{
           width: data.size,
           height: data.size,
-          borderRadius: '50%',
-          border: '3px solid white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-          overflow: 'hidden',
-          cursor: 'pointer',
+          borderRadius: "50%",
+          border: "3px solid white",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          overflow: "hidden",
+          cursor: "pointer",
           backgroundColor: data.color,
         }}
       >
@@ -41,45 +46,56 @@ function PersonNode({ data }: NodeProps) {
             src={data.photo}
             alt={data.label}
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
           />
         ) : (
           <div
             style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: data.size / 3,
-              color: '#fff',
-              fontWeight: 'bold',
+              color: "#fff",
             }}
           >
-            {data.label.charAt(0).toUpperCase()}
+            <div className="font-bold">
+              {data.label.charAt(0).toUpperCase()}
+            </div>
           </div>
         )}
       </div>
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: data.size + 8,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: 14,
+          left: "50%",
+          transform: "translateX(-50%)",
+          fontSize: 12,
           fontWeight: 500,
-          color: '#333',
-          whiteSpace: 'nowrap',
-          backgroundColor: 'rgba(255,255,255,0.9)',
-          padding: '4px 8px',
-          borderRadius: 4,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+          color: "#333",
+          whiteSpace: "nowrap",
+          backgroundColor: "rgba(255,255,255,0.95)",
+          padding: "6px 10px",
+          borderRadius: 6,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          minWidth: 160,
         }}
       >
-        {data.label}
+        <div className="font-semibold">{data.label}</div>
+        {data.company && (
+          <div className="text-xs text-gray-600 mt-1">{data.company}</div>
+        )}
+        {data.past_experience && data.past_experience.length > 0 && (
+          <div className="text-xs text-gray-500 mt-1 text-wrap">
+            Prev. {data.past_experience.map((exp: PastExperience) => exp.company).join(", ")}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -89,27 +105,34 @@ const nodeTypes = {
   person: PersonNode,
 };
 
-function applyForceLayout(graphData: GraphData): { nodes: Node[]; edges: Edge[] } {
-  const personNodes = graphData.nodes.filter(node => node.type === 'person');
-  
-  const simulationNodes = personNodes.map(node => ({
+function applyForceLayout(graphData: GraphData): {
+  nodes: Node[];
+  edges: Edge[];
+} {
+  const personNodes = graphData.nodes.filter((node) => node.type === "person");
+
+  const simulationNodes = personNodes.map((node) => ({
     ...node,
     x: Math.random() * 400,
     y: Math.random() * 400,
   }));
 
   const simulationLinks = graphData.links
-    .filter(link => {
-      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      const sourceNode = personNodes.find(n => n.id === sourceId);
-      const targetNode = personNodes.find(n => n.id === targetId);
+    .filter((link) => {
+      const sourceId =
+        typeof link.source === "object" ? link.source.id : link.source;
+      const targetId =
+        typeof link.target === "object" ? link.target.id : link.target;
+      const sourceNode = personNodes.find((n) => n.id === sourceId);
+      const targetNode = personNodes.find((n) => n.id === targetId);
       return sourceNode && targetNode;
     })
-    .map(link => {
-      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      
+    .map((link) => {
+      const sourceId =
+        typeof link.source === "object" ? link.source.id : link.source;
+      const targetId =
+        typeof link.target === "object" ? link.target.id : link.target;
+
       return {
         source: sourceId,
         target: targetId,
@@ -118,12 +141,17 @@ function applyForceLayout(graphData: GraphData): { nodes: Node[]; edges: Edge[] 
     });
 
   forceSimulation(simulationNodes)
-    .force('link', forceLink(simulationLinks).id((d: any) => d.id).distance(80))
-    .force('charge', forceManyBody().strength(-200))
-    .force('center', forceCenter(200, 200))
+    .force(
+      "link",
+      forceLink(simulationLinks)
+        .id((d: any) => d.id)
+        .distance(80),
+    )
+    .force("charge", forceManyBody().strength(-200))
+    .force("center", forceCenter(200, 200))
     .tick(300);
 
-  const nodes: Node[] = simulationNodes.map(node => ({
+  const nodes: Node[] = simulationNodes.map((node) => ({
     id: node.id,
     type: node.type,
     position: { x: node.x!, y: node.y! },
@@ -132,6 +160,8 @@ function applyForceLayout(graphData: GraphData): { nodes: Node[]; edges: Edge[] 
       color: node.color,
       size: 80,
       photo: node.photo,
+      company: node.company,
+      past_experience: node.past_experience,
       originalNode: node,
     },
   }));
@@ -140,20 +170,25 @@ function applyForceLayout(graphData: GraphData): { nodes: Node[]; edges: Edge[] 
     id: `e${index}`,
     source: link.source as string,
     target: link.target as string,
-    animated: link.type === 'current',
+    animated: link.type === "current",
     style: {
-      stroke: 'rgba(150, 150, 150, 0.3)',
-      strokeWidth: link.type === 'current' ? 2 : 1,
+      stroke: "rgba(150, 150, 150, 0.3)",
+      strokeWidth: link.type === "current" ? 2 : 1,
     },
   }));
 
   return { nodes, edges };
 }
 
-export function NetworkGraph({ data, onNodeClick, width, height }: NetworkGraphProps) {
+export function NetworkGraph({
+  data,
+  onNodeClick,
+  width,
+  height,
+}: NetworkGraphProps) {
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
     () => applyForceLayout(data),
-    [data]
+    [data],
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes);
@@ -167,11 +202,11 @@ export function NetworkGraph({ data, onNodeClick, width, height }: NetworkGraphP
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      if (node.type === 'person') {
+      if (node.type === "person") {
         onNodeClick(node.data.originalNode);
       }
     },
-    [onNodeClick]
+    [onNodeClick],
   );
 
   return (
