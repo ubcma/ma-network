@@ -21,7 +21,7 @@ export default function App() {
     <div className="min-h-screen bg-secondary/50 font-sans">
       {/* Main Content */}
       <div className="min-h-screen transition-all duration-300">
-        <main className="p-4 md:p-8 max-w-[1600px] mx-auto">
+        <main className="p-4 md:p-8">
           <Directory />
         </main>
       </div>

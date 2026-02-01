@@ -8,6 +8,7 @@ export interface GraphNode {
   company?: string;
   color?: string;
   val?: number;
+  photo?: string;
 }
 
 export interface GraphLink {
@@ -28,6 +29,9 @@ export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
 
   // Add person nodes
   profiles.forEach(profile => {
+    const id = new URLSearchParams(new URL(profile.profile_photo_url ?? "", window.location.href).search).get("id");
+    const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
+
     nodes.push({
       id: profile.id,
       name: `${profile.first_name} ${profile.last_name}`,
@@ -35,23 +39,13 @@ export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
       profile: profile,
       company: profile.current_company,
       color: profile.contact_type === 'alumni' ? '#e11d48' : '#374151',
-      val: 8
+      val: 8,
+      photo: photoUrl
     });
 
     // Track companies
     companyNodes.add(profile.current_company);
     profile.past_experience.forEach(exp => companyNodes.add(exp.company));
-  });
-
-  // Add company nodes
-  companyNodes.forEach(company => {
-    nodes.push({
-      id: `company-${company}`,
-      name: company,
-      type: 'company',
-      color: '#94a3b8',
-      val: 15
-    });
   });
 
   // Add links for current positions
