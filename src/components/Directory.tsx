@@ -150,7 +150,7 @@ export function Directory() {
         <div>
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Directory</h2>
           <p className="text-muted-foreground mt-1">
-            Connect with {filteredProfiles.length} alumni and executives
+            Connect with UBCMA alumni and executives!
           </p>
         </div>
 
