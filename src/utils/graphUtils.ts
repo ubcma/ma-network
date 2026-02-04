@@ -1,36 +1,39 @@
-import { type NetworkProfile, type PastExperience } from './networkProfileUtils';
+import { type MARole, type NetworkProfile, type PastExperience } from './networkProfileUtils';
 
 export interface GraphNode {
   id: string;
   name: string;
-  type: 'person' | 'company';
+  type: 'person' | 'portfolio';
   profile?: NetworkProfile;
   company?: string;
   past_experience: PastExperience[];
   color?: string;
   val?: number;
   photo?: string;
+  ma_role?: MARole;
 }
 
-export interface GraphLink {
+export interface GraphEdge {
+  id: string;
   source: string;
   target: string;
-  type: 'current' | 'past';
+  type?: string;
 }
 
 export interface GraphData {
   nodes: GraphNode[];
-  links: GraphLink[];
+  edges: GraphEdge[];
 }
 
 export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
   const nodes: GraphNode[] = [];
-  const links: GraphLink[] = [];
-  const companyNodes = new Set<string>();
+  const edges: GraphEdge[] = [];
+  const portfolioNodes = new Set<string>();
 
-  // Add person nodes
   profiles.forEach(profile => {
-    const id = new URLSearchParams(new URL(profile.profile_photo_url ?? "", window.location.href).search).get("id");
+    const id = new URLSearchParams(
+      new URL(profile.profile_photo_url ?? "", window.location.href).search
+    ).get("id");
     const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
 
     nodes.push({
@@ -40,35 +43,40 @@ export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
       profile: profile,
       company: profile.current_company,
       past_experience: profile.past_experience,
-      color: profile.contact_type === 'alumni' ? '#e11d48' : '#374151',
+      color: profile.contact_type === 'alumni' ? '#e11d48' : '#51373b',
       val: 8,
-      photo: photoUrl
+      photo: photoUrl,
+      ma_role: profile.ma_role
     });
 
-    // Track companies
-    companyNodes.add(profile.current_company);
-    profile.past_experience.forEach(exp => companyNodes.add(exp.company));
+    if (profile.ma_role?.portfolio) {
+      portfolioNodes.add(profile.ma_role.portfolio);
+    }
   });
 
-  // Add links for current positions
+  portfolioNodes.forEach(portfolio => {
+    nodes.push({
+      id: `portfolio-${portfolio}`,
+      name: portfolio,
+      type: 'portfolio',
+      past_experience: [],
+      color: '#f63b60',
+      val: 12
+    });
+  });
+
   profiles.forEach(profile => {
-    links.push({
-      source: profile.id,
-      target: `company-${profile.current_company}`,
-      type: 'current'
-    });
-
-    // Add links for past experience
-    profile.past_experience.forEach(exp => {
-      links.push({
+    if (profile.ma_role?.portfolio) {
+      edges.push({
+        id: `${profile.id}-${profile.ma_role.portfolio}`,
         source: profile.id,
-        target: `company-${exp.company}`,
-        type: 'past'
+        target: `portfolio-${profile.ma_role.portfolio}`,
+        type: 'current'
       });
-    });
+    }
   });
 
-  return { nodes, links };
+  return { nodes, edges };
 };
 
 // Search function

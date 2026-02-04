@@ -1,8 +1,6 @@
 import { type NetworkProfile } from "@/utils/networkProfileUtils";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface ProfileCardProps {
   profile: NetworkProfile;
@@ -14,132 +12,124 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
 
   const maPosition = profile.ma_role?.position?.trim();
   const maPortfolio = profile.ma_role?.portfolio?.trim();
-
   const currentRole = profile.current_role?.trim();
   const currentCompany = profile.current_company?.trim();
 
-  const id = new URLSearchParams(new URL(profile.profile_photo_url ?? "", window.location.href).search).get("id");
+  const id = new URLSearchParams(
+    new URL(profile.profile_photo_url ?? "", window.location.href).search,
+  ).get("id");
   const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
 
+  const isAlumni = profile.contact_type === "alumni";
+
+  // --- HOBBY TRUNCATION LOGIC ---
+  const MAX_CHARS = 50; 
+  let currentChars = 0;
+  const visibleHobbies: string[] = [];
+
+  (profile.hobbies || []).forEach((hobby) => {
+    if (currentChars + hobby.length <= MAX_CHARS && visibleHobbies.length < 5) {
+      visibleHobbies.push(hobby);
+      currentChars += hobby.length; 
+      currentChars += 2; 
+    }
+  });
+
+  const hiddenCount = (profile.hobbies?.length || 0) - visibleHobbies.length;
+
   return (
-    <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={onClick}>
-      <div className="flex items-start gap-4">
-        {/* Avatar / Photo */}
-        <div className="w-12 h-12 rounded-full bg-primary/10 ring-1 ring-primary/20 shrink-0 overflow-hidden flex items-center justify-center mt-0.5">
-          {profile.profile_photo_url ? (
-            <img
-              src={photoUrl}
-              alt={`${profile.first_name} ${profile.last_name}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <span className="text-primary font-bold text-xl">{initials}</span>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Name + Badges */}
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-lg truncate">
-                {profile.first_name} {profile.last_name}
-              </h3>
-
-              <div className="flex flex-wrap gap-2 mt-1">
-                
-                <Badge variant={profile.contact_type === "alumni" ? "default" : "secondary"}
-                      className="bg-[#f04362] text-white hover:bg-[#f04362]/90">
-                  {profile.contact_type === "alumni" ? "Alumni" : "Executive"} 
-                </Badge>
-
-                {profile.open_to_contact ? (
-                  <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-100">
-                    Open to contact
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-gray-200">
-                    Not available
-                  </span>
-                )}
-
-                {/* MA role (position + portfolio) */}
-                {maPosition ? (
-                  <Badge variant="outline" className="truncate max-w-[340px]">
-                    MA: {maPosition}
-                    {maPortfolio ? ` • ${maPortfolio}` : ""}
-                  </Badge>
-                ) : null}
+    <Card
+      className="glass-card group rounded-xs p-4 md:p-5 cursor-pointer h-full flex flex-col justify-between"
+      onClick={onClick}
+    >
+      <div className="flex gap-3 md:gap-4">
+        {/* LEFT COLUMN: Photo & Status */}
+        <div className="flex flex-col items-center gap-3 shrink-0">
+          {/* Responsive Avatar: w-14 on mobile, w-16 on desktop */}
+          <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-full overflow-hidden bg-white/10 shadow-sm ring-1 ring-white/10">
+            {profile.profile_photo_url ? (
+              <img
+                src={photoUrl}
+                alt={`${profile.first_name} ${profile.last_name}`}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-(--brand) text-black font-semibold text-lg md:text-xl">
+                {initials}
               </div>
-            </div>
-          </div>
-
-          {/* Current Position (role @ company) */}
-          <div className="flex items-start gap-2 mb-2 text-sm">
-            <div className="min-w-0">
-              <p className="font-medium truncate">
-                {currentRole ? currentRole : "—"}
-                {currentCompany ? (
-                  <span className="font-normal text-gray-600">{` @ ${currentCompany}`}</span>
-                ) : null}
-              </p>
-              {profile.current_role_desc ? (
-                <p className="text-gray-600 line-clamp-1">{profile.current_role_desc}</p>
-              ) : (
-                <p className="text-gray-600 truncate">{currentCompany || "—"}</p>
-              )}
-            </div>
-          </div>
-
-
-          {maPortfolio ? (
-            <div className="flex items-start gap-2 mb-2 text-sm">
-              <Users className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
-              <p className="text-gray-700 truncate">
-                Portfolio: <span className="text-gray-600">{maPortfolio}</span>
-              </p>
-            </div>
-          ) : null}
-        
-
-          {/* Bio */}
-          {profile.bio ? (
-            <p className="text-sm text-gray-700 line-clamp-2 mb-3">{profile.bio}</p>
-          ) : null}
-
-          {/* Topics */}
-          {profile.hobbies?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {profile.hobbies.slice(0, 3).map((hobby, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs">
-                  {hobby}
-                </Badge>
-              ))}
-              {profile.hobbies.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{profile.hobbies.length - 3} more
-                </Badge>
-              )}
-            </div>
-          )}
-
-
-          {/* Footer */}
-            <div className="mt-3 pt-3 border-t flex items-center justify-end gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick();
-                }}
-              >
-              View Profile
-            </Button>
+            )}
           </div>
         </div>
+
+        {/* RIGHT COLUMN: Info */}
+        <div className="flex-1 min-w-0">
+          {/* Top meta tags */}
+          <div className="flex md:flex-row flex-col items-start justify-start md:gap-1 mb-1.5">
+            <span className="text-[11px] md:text-xs font-medium text-(--muted-ink)">
+              {isAlumni ? "Alumni" : "Executive"}
+            </span>
+
+            <span className="text-[11px] md:text-xs text-(--muted-ink) font-medium whitespace-nowrap">
+              <span className="hidden md:inline">•</span> {maPosition && maPosition + ", "} {maPortfolio}
+            </span>
+          </div>
+
+          {/* Name */}
+          <h3 className="text-xl md:text-2xl font-medium text-(--ink) leading-none mb-2 group-hover:text-(--brand-glow) transition-colors truncate overflow-visible">
+            {profile.first_name} {profile.last_name}
+          </h3>
+
+          {/* Job Title */}
+          {currentRole ? (
+            <div className="flex items-start gap-2 text-(--muted-ink) mb-3 md:mb-4">
+              <span className="font-medium text-xs leading-snug text-balance">
+                {currentRole}
+                {currentCompany ? (
+                  <span className="text-(--muted-ink)/80 font-normal">
+                    {" "}
+                    at <span className="text-(--ink) group-hover:text-(--brand-glow) transition-colors duration-200 font-medium"> {currentCompany} </span>
+                  </span>
+                ) : null}
+              </span>
+            </div>
+          )
+        :(
+            <div className="flex items-start gap-2 text-(--muted-ink) mb-3 md:mb-4">
+              <span className="text-xs leading-snug text-balance text-(--muted-ink) font-normal">
+                {isAlumni ? "Alumni, Graduated" : "Undergraduate Student"}
+              </span>
+            </div>
+          )
+        }
+
+          {/* Hobbies - Wraps on mobile, Single line on desktop */}
+          <div className="flex flex-row gap-1.5 flex-wrap items-center mt-auto overflow-hidden">
+            {visibleHobbies.map((hobby, idx) => (
+              <span
+                key={idx}
+                className="inline-flex shrink-0 items-center px-2 py-0.5 text-xs bg-white/10 text-(--muted-ink) rounded-xs truncate max-w-[140px] capitalize"
+              >
+                {hobby}
+              </span>
+            ))}
+            
+            {hiddenCount > 0 && (
+              <span className="inline-flex shrink-0 items-center px-2 py-0.5 text-xs bg-white/10 text-(--muted-ink) rounded-xs">
+                +{hiddenCount} more
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+        <button className="flex items-center gap-1 text-xs font-medium text-(--muted-ink) group-hover:text-(--brand) transition-colors hover:cursor-pointer">
+          <span>View Profile</span>
+          <ArrowRight className="w-3 h-3 transition-transform group-hover:-rotate-45" />
+        </button>
       </div>
     </Card>
   );

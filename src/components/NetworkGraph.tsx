@@ -6,21 +6,18 @@ import ReactFlow, {
   useEdgesState,
   Background,
   Controls,
-  ConnectionMode,
   type NodeProps,
+  Handle,
+  Position,
+  MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-} from "d3-force";
 import { type GraphData, type GraphNode } from "@/utils/graphUtils";
 import type { PastExperience } from "@/utils/networkProfileUtils";
 
 interface NetworkGraphProps {
   data: GraphData;
+  visibleProfileIds: Set<string>;
   onNodeClick: (node: GraphNode) => void;
   width: number;
   height: number;
@@ -29,13 +26,14 @@ interface NetworkGraphProps {
 function PersonNode({ data }: NodeProps) {
   return (
     <div style={{ position: "relative" }}>
+      <Handle type="source" position={Position.Top} />
       <div
         style={{
           width: data.size,
           height: data.size,
           borderRadius: "50%",
           border: "3px solid white",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          boxShadow: "0 2px 8px rgba(39, 11, 11, 0.2)",
           overflow: "hidden",
           cursor: "pointer",
           backgroundColor: data.color,
@@ -63,7 +61,7 @@ function PersonNode({ data }: NodeProps) {
               color: "#fff",
             }}
           >
-            <div className="font-bold">
+            <div className="font-semibold">
               {data.label.charAt(0).toUpperCase()}
             </div>
           </div>
@@ -77,23 +75,40 @@ function PersonNode({ data }: NodeProps) {
           transform: "translateX(-50%)",
           fontSize: 12,
           fontWeight: 500,
-          color: "#333",
+          color: "#f7f1e9",
           whiteSpace: "nowrap",
-          backgroundColor: "rgba(255,255,255,0.95)",
+          backgroundColor: "rgba(18, 12, 20, 0.95)",
           padding: "6px 10px",
-          borderRadius: 6,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          borderRadius: 8,
+          boxShadow: "0 8px 20px rgba(8, 6, 12, 0.5)",
           textAlign: "center",
           minWidth: 160,
+          maxWidth: 200,
+          textWrap: "wrap",
+          border: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(8px)",
         }}
       >
-        <div className="font-semibold">{data.label}</div>
-        {data.company && (
-          <div className="text-xs text-gray-600 mt-1">{data.company}</div>
+        <div className="font-semibold">
+          {data.label}
+        </div>
+        {data.company ? (
+          <div className="text-xs mt-1" style={{ color: "#c9beb2" }}>
+            {data.company}
+          </div>
+        ) : (
+          <div className="text-xs mt-1" style={{ color: "#a99da0" }}>
+            {data.originalNode.profile.contact_type === "alumni"
+              ? "Alumni"
+              : data.ma_role.position + ", " + data.ma_role.portfolio}
+          </div>
         )}
         {data.past_experience && data.past_experience.length > 0 && (
-          <div className="text-xs text-gray-500 mt-1 text-wrap">
-            Prev. {data.past_experience.map((exp: PastExperience) => exp.company).join(", ")}
+          <div className="text-xs mt-1" style={{ color: "#8f848c" }}>
+            Prev.{" "}
+            {data.past_experience
+              .map((exp: PastExperience) => exp.company)
+              .join(", ")}
           </div>
         )}
       </div>
@@ -101,104 +116,191 @@ function PersonNode({ data }: NodeProps) {
   );
 }
 
+function PortfolioNode({ data }: NodeProps) {
+  return (
+    <div style={{ position: "relative" }}>
+      <Handle type="target" position={Position.Top} />
+      <div
+        style={{
+          width: data.size,
+          height: data.size,
+          borderRadius: "50%",
+          border: "3px solid #ef3050",
+          boxShadow: "0 10px 22px rgba(12, 8, 18, 0.55)",
+          overflow: "hidden",
+          backgroundColor: "rgba(16, 12, 20, 0.95)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#f7f1e9",
+            textAlign: "center",
+            padding: "0 10px",
+          }}
+        >
+          {data.label}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const nodeTypes = {
   person: PersonNode,
+  portfolio: PortfolioNode,
 };
 
-function applyForceLayout(graphData: GraphData): {
-  nodes: Node[];
-  edges: Edge[];
-} {
+function groupedLayout(graphData: GraphData, visibleProfileIds: Set<string>) {
   const personNodes = graphData.nodes.filter((node) => node.type === "person");
 
-  const simulationNodes = personNodes.map((node) => ({
-    ...node,
-    x: Math.random() * 400,
-    y: Math.random() * 400,
-  }));
+  // Group people by their portfolio
+  const portfoliosMap = new Map<string, GraphNode[]>();
+  const unassigned: GraphNode[] = [];
 
-  const simulationLinks = graphData.links
-    .filter((link) => {
-      const sourceId =
-        typeof link.source === "object" ? link.source.id : link.source;
-      const targetId =
-        typeof link.target === "object" ? link.target.id : link.target;
-      const sourceNode = personNodes.find((n) => n.id === sourceId);
-      const targetNode = personNodes.find((n) => n.id === targetId);
-      return sourceNode && targetNode;
-    })
-    .map((link) => {
-      const sourceId =
-        typeof link.source === "object" ? link.source.id : link.source;
-      const targetId =
-        typeof link.target === "object" ? link.target.id : link.target;
+  personNodes.forEach((node) => {
+    const portfolio = node.ma_role?.portfolio;
+    if (portfolio) {
+      if (!portfoliosMap.has(portfolio)) portfoliosMap.set(portfolio, []);
+      portfoliosMap.get(portfolio)!.push(node);
+    } else {
+      unassigned.push(node);
+    }
+  });
 
-      return {
-        source: sourceId,
-        target: targetId,
-        type: link.type,
-      };
+  const portfolios = Array.from(portfoliosMap.keys());
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  // Center of our graph canvas
+  const centerX = 800;
+  const centerY = 800;
+
+  // STEP 1: Layout Portfolios in a large circle
+  const mainRadius = 450;
+  const portfolioPositions = new Map<string, { x: number; y: number }>();
+
+  portfolios.forEach((portfolio, index) => {
+    const angle = (index / portfolios.length) * 2 * Math.PI;
+    const px = centerX + Math.cos(angle) * mainRadius;
+    const py = centerY + Math.sin(angle) * mainRadius;
+
+    portfolioPositions.set(portfolio, { x: px, y: py });
+
+    nodes.push({
+      id: `portfolio-${portfolio}`,
+      type: "portfolio",
+      position: { x: px, y: py },
+      data: {
+        label: `${portfolio} Portfolio`,
+        color: "#ff2259",
+        size: 100,
+      },
+    });
+  });
+
+  // STEP 2: Layout Members orbiting their specific portfolio
+  const subRadius = 180; // Distance of members from their portfolio
+
+  portfoliosMap.forEach((members, portfolio) => {
+    const parentPos = portfolioPositions.get(portfolio)!;
+    const portfolioVisible = members.some((member) =>
+      visibleProfileIds.has(member.id),
+    );
+
+    members.forEach((member, index) => {
+      // Offset the starting angle slightly so they don't overlap the center connections
+      const angle = (index / members.length) * 2 * Math.PI + 0.5;
+      const mx = parentPos.x + Math.cos(angle) * subRadius;
+      const my = parentPos.y + Math.sin(angle) * subRadius;
+
+      nodes.push({
+        id: member.id,
+        type: "person",
+        position: { x: mx, y: my },
+        hidden: !visibleProfileIds.has(member.id),
+        data: {
+          label: member.name,
+          color: member.color || "#3a202d",
+          size: 80,
+          photo: member.photo,
+          company: member.company,
+          past_experience: member.past_experience || [],
+          ma_role: member.ma_role,
+          originalNode: member,
+        },
+      });
+
+      // ADD EDGE: Connect member to their portfolio (RED)
+      edges.push({
+        id: `link-${member.id}-to-${portfolio}`,
+        source: member.id,
+        target: `portfolio-${portfolio}`,
+        animated: true,
+        hidden:
+          !visibleProfileIds.has(member.id) ||
+          !portfolioVisible,
+        style: { stroke: "#ef446c", strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#ef446c" },
+      });
     });
 
-  forceSimulation(simulationNodes)
-    .force(
-      "link",
-      forceLink(simulationLinks)
-        .id((d: any) => d.id)
-        .distance(80),
-    )
-    .force("charge", forceManyBody().strength(-200))
-    .force("center", forceCenter(200, 200))
-    .tick(300);
+    const portfolioNode = nodes.find(
+      (node) => node.id === `portfolio-${portfolio}`,
+    );
+    if (portfolioNode) {
+      portfolioNode.hidden = !portfolioVisible;
+    }
+  });
 
-  const nodes: Node[] = simulationNodes.map((node) => ({
-    id: node.id,
-    type: node.type,
-    position: { x: node.x!, y: node.y! },
-    data: {
-      label: node.name,
-      color: node.color,
-      size: 80,
-      photo: node.photo,
-      company: node.company,
-      past_experience: node.past_experience,
-      originalNode: node,
-    },
-  }));
-
-  const edges: Edge[] = simulationLinks.map((link, index) => ({
-    id: `e${index}`,
-    source: link.source as string,
-    target: link.target as string,
-    animated: link.type === "current",
-    style: {
-      stroke: "rgba(150, 150, 150, 0.3)",
-      strokeWidth: link.type === "current" ? 2 : 1,
-    },
-  }));
+  // STEP 3: Layout unassigned members in the center
+  unassigned.forEach((member, index) => {
+    const angle = (index / unassigned.length) * 2 * Math.PI;
+    nodes.push({
+      id: member.id,
+      type: "person",
+      position: {
+        x: centerX + Math.cos(angle) * 150,
+        y: centerY + Math.sin(angle) * 150,
+      },
+      hidden: !visibleProfileIds.has(member.id),
+      data: {
+        label: member.name,
+        color: member.color || "#3a202d",
+        size: 80,
+        photo: member.photo,
+        // ... rest of data
+      },
+    });
+  });
 
   return { nodes, edges };
 }
 
 export function NetworkGraph({
   data,
+  visibleProfileIds,
   onNodeClick,
   width,
   height,
 }: NetworkGraphProps) {
-  const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
-    () => applyForceLayout(data),
-    [data],
+  const layoutData = useMemo(
+    () => groupedLayout(data, visibleProfileIds),
+    [data, visibleProfileIds],
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(layoutData.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutData.edges);
 
   useEffect(() => {
-    const { nodes: newNodes, edges: newEdges } = applyForceLayout(data);
-    setNodes(newNodes);
-    setEdges(newEdges);
-  }, [data, setNodes, setEdges]);
+    const newLayoutData = groupedLayout(data, visibleProfileIds);
+    setNodes(newLayoutData.nodes);
+    setEdges(newLayoutData.edges);
+  }, [data, visibleProfileIds, setNodes, setEdges]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -210,7 +312,7 @@ export function NetworkGraph({
   );
 
   return (
-    <div style={{ width, height }}>
+    <div style={{ width, height, position: "relative" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -218,9 +320,18 @@ export function NetworkGraph({
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
-        connectionMode={ConnectionMode.Loose}
         fitView
         attributionPosition="bottom-left"
+        defaultEdgeOptions={{
+          style: {
+            stroke: "#ef446c", // Red color
+            strokeWidth: 2,
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: "#ef446c",
+          },
+        }}
       >
         <Background />
         <Controls />

@@ -24,7 +24,7 @@ const COL = {
   contactNotes:
     "Contact Notes (e.g., availability on campus, specific areas you're open to discussing)",
   photo: "Profile Photo Upload (URL or file upload)",
-  maPosition: 'What is your position within MA?\n[Position, Portfolio]',
+  maPosition: "What was/is your position within MA?\nPosition, Portfolio",
 } as const;
 
 function sheetToObjects(data: string[][]): RowObj[] {
@@ -79,7 +79,6 @@ function parseMaRole(raw: string): MARole | undefined {
   const s = (raw ?? "").trim();
   if (!s) return undefined;
 
-  // 1) "Position (Portfolio)"
   const parenMatch = s.match(/^(.*?)\s*\((.*?)\)\s*$/);
   if (parenMatch) {
     const position = parenMatch[1]?.trim();
@@ -100,7 +99,7 @@ function parseMaRole(raw: string): MARole | undefined {
   }
 
   // 3) "Position - Portfolio" or "Position | Portfolio"
-  const sepMatch = s.match(/^(.*?)\s*(?:-|\|)\s*(.*?)$/);
+  const sepMatch = s.match(/^(.*?)\s*(?:|\|)\s*(.*?)$/);
 
   if (sepMatch) {
     const position = sepMatch[1]?.trim();
@@ -144,6 +143,11 @@ export function googleSheetToProfiles(data: string[][]): NetworkProfile[] {
   const objects = sheetToObjects(data);
 
   return objects.map((row) => {
+
+      if (objects.indexOf(row) === 0) {
+    console.log("All columns in first row:", Object.keys(row));
+  }
+
     const past_experience: PastExperience[] = [
       parseExperience(row[COL.exp1]),
       parseExperience(row[COL.exp2]),
@@ -154,7 +158,10 @@ export function googleSheetToProfiles(data: string[][]): NetworkProfile[] {
       ...parseCommaList(row[COL.expertise]),
     ];
 
-    return {
+    const rawMaPosition = row[COL.maPosition];
+    const parsedMaRole = parseMaRole(rawMaPosition);
+
+    const object = {
       id: makeStableId(row),
 
       first_name: row[COL.firstName] || "",
@@ -179,7 +186,9 @@ export function googleSheetToProfiles(data: string[][]): NetworkProfile[] {
       profile_photo_url: normalizePhotoUrl(row[COL.photo]),
       created_at: row[COL.timestamp] || new Date().toISOString(),
 
-      ma_role: parseMaRole(row[COL.maPosition]),
+      ma_role: parsedMaRole,
     };
+
+    return object;
   });
 }

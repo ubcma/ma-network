@@ -25,5 +25,6 @@ export async function fetchPublicGoogleSheet(): Promise<string[][]> {
 
 
   const rows = (parsed.data ?? []).map((row) => row.map((c) => (c ?? "").trim()));
+
   return rows;
 }
