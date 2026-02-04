@@ -24,7 +24,8 @@ const COL = {
   contactNotes:
     "Contact Notes (e.g., availability on campus, specific areas you're open to discussing)",
   photo: "Profile Photo Upload (URL or file upload)",
-  maPosition: "What was/is your position within MA?\nPosition, Portfolio",
+  maPosition: "What was/is your position within MA?\nPosition, Portfolio (e.g. Director, Events)",
+  year: "What year were you a part of MA?\ni.e. the year of the position you typed above."
 } as const;
 
 function sheetToObjects(data: string[][]): RowObj[] {
@@ -187,6 +188,7 @@ export function googleSheetToProfiles(data: string[][]): NetworkProfile[] {
       created_at: row[COL.timestamp] || new Date().toISOString(),
 
       ma_role: parsedMaRole,
+      year: row[COL.year] || "",
     };
 
     return object;

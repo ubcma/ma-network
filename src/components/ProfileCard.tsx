@@ -12,6 +12,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
 
   const maPosition = profile.ma_role?.position?.trim();
   const maPortfolio = profile.ma_role?.portfolio?.trim();
+  const year = profile.year?.trim();
   const currentRole = profile.current_role?.trim();
   const currentCompany = profile.current_company?.trim();
 
@@ -46,7 +47,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
         {/* LEFT COLUMN: Photo & Status */}
         <div className="flex flex-col items-center gap-3 shrink-0">
           {/* Responsive Avatar: w-14 on mobile, w-16 on desktop */}
-          <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-full overflow-hidden bg-white/10 shadow-sm ring-1 ring-white/10">
+          <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xs overflow-hidden bg-white/10 shadow-sm ring-1 ring-white/10">
             {profile.profile_photo_url ? (
               <img
                 src={photoUrl}
@@ -67,12 +68,9 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
         <div className="flex-1 min-w-0">
           {/* Top meta tags */}
           <div className="flex md:flex-row flex-col items-start justify-start md:gap-1 mb-1.5">
-            <span className="text-[11px] md:text-xs font-medium text-(--muted-ink)">
-              {isAlumni ? "Alumni" : "Executive"}
-            </span>
 
             <span className="text-[11px] md:text-xs text-(--muted-ink) font-medium whitespace-nowrap">
-              <span className="hidden md:inline">•</span> {maPosition && maPosition + ", "} {maPortfolio}
+              {maPosition && maPosition + ", "} {maPortfolio}  {year ? `(${year})` : ""}
             </span>
           </div>
 

@@ -34,4 +34,5 @@ export interface NetworkProfile {
   created_at: string;
 
   ma_role?: MARole; 
+  year: string;
 }

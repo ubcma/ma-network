@@ -1,7 +1,12 @@
 "use client";
 
 import { type NetworkProfile } from "@/utils/networkProfileUtils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Mail } from "lucide-react";
@@ -16,18 +21,25 @@ interface ProfileDetailProps {
 function SectionHeading({ title }: { title: string }) {
   return (
     <div className="mb-3">
-      <h3 className="text-lg font-semibold  text-(--ink)">{title}</h3>
+      <h3 className="text-xs font-medium tracking-widest uppercase  text-(--ink)">{title}</h3>
       <div className="mt-2 h-px w-full bg-white/10" />
     </div>
   );
 }
 
-export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) {
+export function ProfileDetail({
+  profile,
+  isOpen,
+  onClose,
+}: ProfileDetailProps) {
   if (!profile) return null;
 
-  const initials = `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`;
+  const initials = `${profile.first_name?.[0] ?? ""}${
+    profile.last_name?.[0] ?? ""
+  }`;
   const maPosition = profile.ma_role?.position?.trim();
   const maPortfolio = profile.ma_role?.portfolio?.trim();
+  const year = profile.year?.trim();
 
   const id = new URLSearchParams(
     new URL(profile.profile_photo_url ?? "", window.location.href).search
@@ -48,13 +60,17 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] },
     },
   };
 
   const avatarVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    show: { opacity: 1, scale: 1, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } },
+    hidden: { opacity: 0, scale: 0.93 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] },
+    },
   };
 
   return (
@@ -88,7 +104,9 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <span className="text-(--brand) font-semibold text-lg">{initials}</span>
+                      <span className="text-(--brand) font-semibold text-lg">
+                        {initials}
+                      </span>
                     )}
                   </motion.div>
 
@@ -99,15 +117,33 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
 
                     <div className="flex flex-wrap gap-2 mt-1">
                       <Badge
-                        variant={profile.contact_type === "alumni" ? "default" : "secondary"}
+                        variant={
+                          profile.contact_type === "alumni"
+                            ? "default"
+                            : "secondary"
+                        }
                         className="bg-(--brand) text-black border-none"
                       >
-                        {profile.contact_type === "alumni" ? "Alumni" : "Executive"}
+                        {profile.contact_type === "alumni"
+                          ? "Alumni"
+                          : "Executive"}
                       </Badge>
 
                       {maPosition ? (
-                        <Badge variant="outline" className="truncate max-w-[520px] border-white/15 text-(--muted-ink)">
-                          {maPosition} {maPortfolio ? ` • ${maPortfolio}` : ""}
+                        <Badge
+                          variant="outline"
+                          className="truncate max-w-[520px] border-white/15 text-(--muted-ink)"
+                        >
+                          {maPosition}{maPortfolio ? `, ${maPortfolio}` : ""}
+                        </Badge>
+                      ) : null}
+
+                      {year ? (
+                        <Badge
+                          variant="outline"
+                          className="truncate max-w-[520px] border-white/15 text-(--muted-ink)"
+                        >
+                          {year}
                         </Badge>
                       ) : null}
                     </div>
@@ -116,26 +152,30 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
               </DialogHeader>
 
               {/* Body */}
-              <motion.div className="space-y-6 mt-4" variants={containerVariants}>
-                
+              <motion.div
+                className="space-y-6 mt-4"
+                variants={containerVariants}
+              >
                 {/* Current Position */}
-                <motion.section variants={itemVariants}>
-                  <SectionHeading title="Current Position" />
-                  <div className="">
-                    <p className="font-medium text-(--ink)">
-                      {profile.current_role || "—"}
-                      {profile.current_company ? (
-                        <span className="font-normal text-(--muted-ink)">{` @ ${profile.current_company}`}</span>
-                      ) : null}
-                    </p>
-
-                    {profile.current_role_desc ? (
-                      <p className="text-sm text-(--muted-ink) mt-1 whitespace-pre-wrap leading-relaxed">
-                        {profile.current_role_desc}
+                {profile.current_role && (
+                  <motion.section variants={itemVariants}>
+                    <SectionHeading title="Current Position" />
+                    <div className="">
+                      <p className="font-medium text-(--ink)">
+                        {profile.current_role || "—"}
+                        {profile.current_company ? (
+                          <span className="font-normal text-(--muted-ink)">{` @ ${profile.current_company}`}</span>
+                        ) : null}
                       </p>
-                    ) : null}
-                  </div>
-                </motion.section>
+
+                      {profile.current_role_desc ? (
+                        <p className="text-sm text-(--muted-ink) mt-1 whitespace-pre-wrap leading-relaxed">
+                          {profile.current_role_desc}
+                        </p>
+                      ) : null}
+                    </div>
+                  </motion.section>
+                )}
 
                 {/* About */}
                 {profile.bio ? (
@@ -151,11 +191,13 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
                 {profile.past_experience?.length ? (
                   <motion.section variants={itemVariants}>
                     <SectionHeading title="Past Experience" />
-                     
 
                     <div className="space-y-3">
                       {profile.past_experience.map((exp, idx) => (
-                        <div key={idx} className="border-l-2 border-white/10 pl-4">
+                        <div
+                          key={idx}
+                          className="border-l-2 border-white/10 pl-4"
+                        >
                           <p className="font-medium text-(--ink)">{exp.role}</p>
                           <p className="text-(--muted-ink)">{exp.company}</p>
                           {exp.desc ? (
@@ -176,7 +218,11 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
                     <div className="">
                       <div className="flex flex-wrap gap-2">
                         {profile.hobbies.map((hobby, idx) => (
-                          <Badge key={idx} variant="outline" className="border-white/15 text-(--muted-ink)">
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className="border-white/15 text-(--muted-ink)"
+                          >
                             {hobby}
                           </Badge>
                         ))}
@@ -201,8 +247,17 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
 
                       <div className=" flex flex-wrap gap-2">
                         {profile.linkedin_url ? (
-                          <Button asChild variant="outline" size="sm" className="border-white/15 text-(--ink) hover:bg-white/10">
-                            <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-white/15 text-(--ink) hover:bg-white/10"
+                          >
+                            <a
+                              href={profile.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <Linkedin className="w-4 h-4 mr-2" />
                               LinkedIn
                             </a>
@@ -210,7 +265,12 @@ export function ProfileDetail({ profile, isOpen, onClose }: ProfileDetailProps) 
                         ) : null}
 
                         {profile.email ? (
-                          <Button asChild variant="outline" size="sm" className="border-white/15 text-(--ink) hover:bg-white/10">
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-white/15 text-(--ink) hover:bg-white/10"
+                          >
                             <a href={`mailto:${profile.email}`}>
                               <Mail className="w-4 h-4 mr-2" />
                               Email
