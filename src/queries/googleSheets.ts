@@ -9,7 +9,7 @@ export async function fetchPublicGoogleSheet(): Promise<string[][]> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch Google Sheet CSV (${response.status})`);
+    throw new Error(`Failed to fetch data (${response.status})`);
   }
 
   const csvText = await response.text();
