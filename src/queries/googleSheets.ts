@@ -1,10 +1,10 @@
 import Papa from "papaparse";
-import { GOOGLE_SHEETS_URL} from "@/lib/constants";
 
 
 export async function fetchPublicGoogleSheet(): Promise<string[][]> {
-  const response = await fetch(GOOGLE_SHEETS_URL, {
-
+  const sheetUrl = 
+  import.meta.env?.VITE_GOOGLE_SHEETS_URL;
+  const response = await fetch(sheetUrl, {
     cache: "no-store",
   });
 

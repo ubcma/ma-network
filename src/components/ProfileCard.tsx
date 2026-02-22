@@ -69,7 +69,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
           {/* Top meta tags */}
           <div className="flex md:flex-row flex-col items-start justify-start md:gap-1 mb-1.5">
 
-            <span className="text-[11px] md:text-xs text-(--muted-ink) font-medium whitespace-nowrap">
+            <span className="text-[11px] md:text-xs text-(--muted-ink) font-medium text-wrap">
               {maPosition && maPosition + ", "} {maPortfolio}  {year ? `(${year})` : ""}
             </span>
           </div>
