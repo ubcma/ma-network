@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { NetworkGraph } from "@/components/NetworkGraph";
 import { SearchBar } from "@/components/SearchBar";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetail } from "@/components/ProfileDetail";
-import { Network, Users, Info, List } from "lucide-react";
+import { Network, Users, List } from "lucide-react";
 
 import { fetchPublicGoogleSheet } from "@/queries/googleSheets";
 import { googleSheetToProfiles } from "@/utils/googleSheetToProfiles";
@@ -17,8 +18,8 @@ import {
 } from "@/utils/graphUtils";
 
 function uniqSorted(values: string[]) {
-  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort((a, b) =>
-    a.localeCompare(b),
+  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort(
+    (a, b) => a.localeCompare(b),
   );
 }
 
@@ -36,25 +37,30 @@ function getAllTopicsFromProfiles(profiles: NetworkProfile[]) {
 }
 
 export function Directory() {
-
   const [profiles, setProfiles] = useState<NetworkProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
-  // filtering 
+  // filtering
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterTopic, setFilterTopic] = useState("");
   const [filterContactType, setFilterContactType] = useState("");
 
-  const [selectedProfile, setSelectedProfile] = useState<NetworkProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<NetworkProfile | null>(
+    null,
+  );
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-
-  const [graphDimensions, setGraphDimensions] = useState({ width: 800, height: 600 });
+  const [graphDimensions, setGraphDimensions] = useState({
+    width: 1000,
+    height: 800,
+  });
   const [viewMode, setViewMode] = useState<"graph" | "list">("list");
-
 
   useEffect(() => {
     let cancelled = false;
@@ -82,8 +88,11 @@ export function Directory() {
     };
   }, []);
 
-  // get all memoized options from the network profiles 
-  const companies = useMemo(() => getAllCompaniesFromProfiles(profiles), [profiles]);
+  // get all memoized options from the network profiles
+  const companies = useMemo(
+    () => getAllCompaniesFromProfiles(profiles),
+    [profiles],
+  );
   const roles = useMemo(() => getAllRolesFromProfiles(profiles), [profiles]);
   const topics = useMemo(() => getAllTopicsFromProfiles(profiles), [profiles]);
 
@@ -91,7 +100,8 @@ export function Directory() {
     const normalizedCompany = filterCompany === "all" ? "" : filterCompany;
     const normalizedRole = filterRole === "all" ? "" : filterRole;
     const normalizedTopic = filterTopic === "all" ? "" : filterTopic;
-    const normalizedContactType = filterContactType === "all" ? "" : filterContactType;
+    const normalizedContactType =
+      filterContactType === "all" ? "" : filterContactType;
 
     return searchProfiles(
       profiles,
@@ -101,11 +111,39 @@ export function Directory() {
       normalizedTopic,
       normalizedContactType,
     );
-  }, [profiles, searchTerm, filterCompany, filterRole, filterTopic, filterContactType]);
+  }, [
+    profiles,
+    searchTerm,
+    filterCompany,
+    filterRole,
+    filterTopic,
+    filterContactType,
+  ]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCompany, filterRole, filterTopic, filterContactType]);
 
-  const graphData = useMemo(() => generateGraphData(filteredProfiles), [filteredProfiles]);
+  const graphData = useMemo(() => generateGraphData(profiles), [profiles]);
+  const visibleProfileIds = useMemo(
+    () => new Set(filteredProfiles.map((profile) => profile.id)),
+    [filteredProfiles],
+  );
 
+  const totalPages = Math.ceil(filteredProfiles.length / pageSize);
+  const paginatedProfiles =
+    viewMode === "list"
+      ? filteredProfiles.slice(
+          (currentPage - 1) * pageSize,
+          currentPage * pageSize,
+        )
+      : filteredProfiles;
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleNodeClick = (node: GraphNode) => {
     if (node.profile) {
@@ -121,7 +159,8 @@ export function Directory() {
   useEffect(() => {
     const updateDimensions = () => {
       const containerWidth =
-        document.getElementById("directory-container")?.clientWidth || window.innerWidth;
+        document.getElementById("directory-container")?.clientWidth ||
+        window.innerWidth;
       const width = Math.min(containerWidth - 48, 1400);
       const height = Math.min(window.innerHeight - 300, 700);
       setGraphDimensions({ width, height });
@@ -130,38 +169,48 @@ export function Directory() {
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
     return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
+  }, [reloadKey]);
 
-
-  if (loading) return <div className="p-6 text-gray-600">Loading directory…</div>;
+  if (loading)
+    return (
+      <div className="glass-panel rounded-xs p-8 flex flex-col items-center gap-3 text-center">
+        <Spinner className="size-5 text-(--brand)" />
+        <div className="text-sm text-(--muted-ink)">Loading directory…</div>
+      </div>
+    );
 
   if (error)
     return (
-      <div className="p-6">
-        <div className="text-red-600 font-medium">Couldn’t load directory</div>
-        <div className="text-gray-600 mt-2 text-sm">{error}</div>
+      <div className="glass-panel rounded-xs p-8 flex flex-col items-start gap-4">
+        <div>
+          <div className="text-(--brand) font-semibold text-lg">Couldn’t load directory</div>
+          <div className="text-(--muted-ink) mt-2 text-sm">
+            {error}
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className="border-white/15 text-(--ink) hover:bg-white/10"
+          onClick={() => setReloadKey((prev) => prev + 1)}
+        >
+          Try again
+        </Button>
       </div>
     );
 
   return (
     <div className="space-y-6" id="directory-container">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Directory</h2>
-          <p className="text-muted-foreground mt-1">
-            Connect with UBCMA alumni and executives!
-          </p>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
 
         {/* View Toggle */}
-        <div className="bg-white p-1 rounded-lg border border-gray-200 flex items-center shadow-sm">
+        <div className="segmented-control fixed bottom-4 left-1/2 z-100 -translate-x-1/2 flex backdrop-blur-lg">
           <button
             onClick={() => setViewMode("list")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`segmented-button cursor-pointer ${
               viewMode === "list"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                ? "active"
+                : ""
             }`}
           >
             <List className="w-4 h-4" />
@@ -169,10 +218,10 @@ export function Directory() {
           </button>
           <button
             onClick={() => setViewMode("graph")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`segmented-button cursor-pointer ${
               viewMode === "graph"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                ? "active"
+                : ""
             }`}
           >
             <Network className="w-4 h-4" />
@@ -182,7 +231,7 @@ export function Directory() {
       </div>
 
       {/* Search Bar */}
-      <Card className="p-6 border-0 shadow-sm bg-white ring-1 ring-gray-100">
+      <div>
         <SearchBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -197,48 +246,24 @@ export function Directory() {
           setFilterTopic={setFilterTopic}
           filterContactType={filterContactType}
           setFilterContactType={setFilterContactType}
-          resultCount={filteredProfiles.length}
         />
-      </Card>
-
-      {/* Legend - Only show for Graph view */}
-      {viewMode === "graph" && (
-        <Card className="p-4 bg-white/80 backdrop-blur border-0 shadow-sm ring-1 ring-gray-100">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium text-sm text-gray-700">Legend:</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#e11d48] ring-2 ring-red-100" />
-              <span className="text-sm text-gray-600">Alumni</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#374151] ring-2 ring-gray-200" />
-              <span className="text-sm text-gray-600">Executive</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#94a3b8] ring-2 ring-slate-100" />
-              <span className="text-sm text-gray-600">Company</span>
-            </div>
-          </div>
-        </Card>
-      )}
+      </div>
 
       {/* Main Content Area */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 overflow-hidden min-h-[600px]">
+      <div className="glass-panel rounded-xs overflow-hidden">
         {viewMode === "graph" ? (
-          <div className="relative w-full h-[700px]">
+          <div className="relative w-full h-full overflow-hidden">
             {filteredProfiles.length > 0 ? (
               <NetworkGraph
                 data={graphData}
+                visibleProfileIds={visibleProfileIds}
                 onNodeClick={handleNodeClick}
                 width={graphDimensions.width}
                 height={graphDimensions.height}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <Network className="w-16 h-16 mb-4 text-gray-200" />
+              <div className="flex flex-col items-center justify-center w-full h-full min-h-128 text-(--muted-ink)">
+                <Network className="text-(--border-strong)" />
                 <p className="text-lg font-medium">No results found</p>
                 <p className="text-sm">Try adjusting your filters</p>
               </div>
@@ -247,18 +272,59 @@ export function Directory() {
         ) : (
           <div className="p-6">
             {filteredProfiles.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredProfiles.map((profile) => (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {paginatedProfiles.map((profile) => (
                   <ProfileCard
                     key={profile.id}
                     profile={profile}
                     onClick={() => handleProfileCardClick(profile)}
                   />
-                ))}
+                  ))}
+                </div>
+                {viewMode === "list" && totalPages > 1 && (
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mono-label text-[11px] text-(--muted-ink)">
+                      Showing{" "}
+                      {(currentPage - 1) * pageSize + 1}–{Math.min(
+                        currentPage * pageSize,
+                        filteredProfiles.length,
+                      )}{" "}
+                      of {filteredProfiles.length}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        className="h-9 border-white/15 text-(--ink) hover:bg-white/10 disabled:opacity-40"
+                        disabled={currentPage === 1}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                      >
+                        Prev
+                      </Button>
+                      <div className="mono-label text-[11px] text-(--muted-ink)">
+                        Page {currentPage} / {totalPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="h-9 border-white/15 text-(--ink) hover:bg-white/10 disabled:opacity-40"
+                        disabled={currentPage === totalPages}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1),
+                          )
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-                <Users className="w-16 h-16 mb-4 text-gray-200" />
+              <div className="flex flex-col items-center justify-center py-20 text-(--muted-ink)">
+                <Users className="w-16 h-16 mb-4 text-(--border-strong)" />
                 <p className="text-lg font-medium">No results found</p>
               </div>
             )}
