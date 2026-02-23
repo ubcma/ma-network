@@ -1,0 +1,60 @@
+import { handleServerError } from './error/handleServer';
+
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+interface FetchOptions {
+  method?: HttpMethod;
+  body?: Record<string, unknown>;
+  headers?: Record<string, string>;
+  credentials?: RequestCredentials;
+}
+
+export async function fetchFromAPI(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<Response> {
+  const {
+    method = 'GET',
+    body,
+    credentials,
+    headers: customHeaders = {},
+  } = options;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...customHeaders,
+  };
+
+  console.log('API Endpoint hit:', endpoint);
+
+  const res = await fetch(`${process.env.VITE_BACKEND_URL}${endpoint}`, {
+    method,
+    headers,
+    credentials: credentials || 'include',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    let errorMessage = 'Failed to fetch data from ' + endpoint;
+
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorMessage;
+    } catch {
+      console.warn('Failed to parse error response as JSON');
+    }
+
+    if (res.status === 429) {
+      throw new Error(
+        'Too many attempts. Please wait 10 minutes before trying again.'
+      );
+    }
+
+    handleServerError('An error occured, please contact our team for support');
+    throw new Error(errorMessage);
+  }
+
+  return res;
+}

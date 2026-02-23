@@ -1,21 +1,21 @@
 import { useState, useMemo, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { NetworkGraph } from "@/components/NetworkGraph";
-import { SearchBar } from "@/components/SearchBar";
-import { ProfileCard } from "@/components/ProfileCard";
-import { ProfileDetail } from "@/components/ProfileDetail";
+import { Button } from "../components/ui/button";
+import { Spinner } from "../components/ui/spinner";
+import { NetworkGraph } from "../components/NetworkGraph";
+import { SearchBar } from "../components/SearchBar";
+import { ProfileCard } from "../components/ProfileCard";
+import { ProfileDetail } from "../components/ProfileDetail";
 import { Network, Users, List } from "lucide-react";
 
-import { fetchPublicGoogleSheet } from "@/queries/googleSheets";
-import { googleSheetToProfiles } from "@/utils/googleSheetToProfiles";
-import type { NetworkProfile } from "@/utils/networkProfileUtils";
+import { fetchPublicGoogleSheet } from "../queries/googleSheets";
+import { googleSheetToProfiles } from "../utils/googleSheetToProfiles";
+import type { NetworkProfile } from "../utils/networkProfileUtils";
 
 import {
   generateGraphData,
   searchProfiles,
   type GraphNode,
-} from "@/utils/graphUtils";
+} from "../utils/graphUtils";
 
 function uniqSorted(values: string[]) {
   return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort(

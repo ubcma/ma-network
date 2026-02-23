@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { handleServerError } from '../error/handleServer';
 
 export const signInWithGoogle = async () => {
-  const frontendBaseURL = process.env.NEXT_PUBLIC_FRONTEND_URL;
+  const frontendBaseURL = process.env.VITE_FRONTEND_URL;
 
   const response = await authClient.signIn.social(
     {
@@ -29,7 +29,7 @@ export const signInWithGoogle = async () => {
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
-    const frontendBaseURL = process.env.NEXT_PUBLIC_FRONTEND_URL;
+    const frontendBaseURL = process.env.VITE_FRONTEND_URL;
 
   const response = await authClient.signIn.email(
     {
