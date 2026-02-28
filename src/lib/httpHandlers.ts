@@ -1,59 +1,47 @@
-import { handleServerError } from './error/handleServer';
+import { handleServerError } from "./error/handleServer";
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 interface FetchOptions {
   method?: HttpMethod;
-  body?: Record<string, unknown>;
+  body?: unknown; // allow any JSON payload
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
 }
 
-export async function fetchFromAPI(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<Response> {
-  const {
-    method = 'GET',
-    body,
-    credentials,
-    headers: customHeaders = {},
-  } = options;
+export async function fetchFromAPI(endpoint: string, options: FetchOptions = {}): Promise<Response> {
+  const { method = "GET", body, credentials, headers: customHeaders = {} } = options;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    Accept: "application/json",
+    ...(body ? { "Content-Type": "application/json" } : {}),
     ...customHeaders,
   };
 
-  console.log('API Endpoint hit:', endpoint);
-
-  const res = await fetch(`${process.env.VITE_BACKEND_URL}${endpoint}`, {
+  const res = await fetch(endpoint, {
     method,
     headers,
-    credentials: credentials || 'include',
-    body: body ? JSON.stringify(body) : undefined,
+    credentials: credentials ?? "include",
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    let errorMessage = 'Failed to fetch data from ' + endpoint;
+    const text = await res.text();
+    let message = `Failed to fetch ${endpoint}`;
 
     try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.message || errorMessage;
+      const json = JSON.parse(text);
+      message = json?.message ?? message;
     } catch {
-      console.warn('Failed to parse error response as JSON');
+      // keep message
     }
 
     if (res.status === 429) {
-      throw new Error(
-        'Too many attempts. Please wait 10 minutes before trying again.'
-      );
+      throw new Error("Too many attempts. Please wait 10 minutes before trying again.");
     }
 
-    handleServerError('An error occured, please contact our team for support');
-    throw new Error(errorMessage);
+    handleServerError("An error occurred, please contact our team for support");
+    throw new Error(message);
   }
 
   return res;

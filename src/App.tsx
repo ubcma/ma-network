@@ -1,5 +1,119 @@
-import { Routes, Route } from "react-router-dom";
+// src/App.tsx
+import * as React from "react";
+import { Routes, Route, Outlet, useLocation } from "react-router-dom";
 import { Directory } from "./components/Directory";
+
+function ProtectedLayout() { // block if not authed by ubcma portal!!! otherwise show the content (Outlet)
+  const location = useLocation();
+  const [loading, setLoading] = React.useState(true);
+  const [authed, setAuthed] = React.useState<boolean | null>(null);
+  const [raw, setRaw] = React.useState<any>(null);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/get-session", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        const text = await res.text();
+
+        let data: any = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          // If backend is unreachable or proxy missing, you might get HTML
+          data = { _nonJson: text?.slice(0, 400) };
+        }
+
+        if (cancelled) return;
+
+        setRaw({
+          url: "/api/auth/get-session",
+          status: res.status,
+          ok: res.ok,
+          contentType: res.headers.get("content-type"),
+          data,
+        });
+
+        setAuthed(!!data?.user);
+      } catch (e: any) {
+        if (cancelled) return;
+        setErr(e?.message ?? String(e));
+        setAuthed(false);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h2>ProtectedLayout</h2>
+        <div>Loading session…</div>
+      </div>
+    );
+  }
+
+  // TEMP: do NOT redirect. Show the result 
+  if (!authed) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h2>Not authed ❌</h2>
+        <div style={{ marginTop: 12 }}>
+          <div>
+            <b>Current path:</b> {location.pathname}
+          </div>
+          {err && (
+            <div>
+              <b>Error:</b> {err}
+            </div>
+          )}
+          {raw && (
+            <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+              {JSON.stringify(raw, null, 2)}
+            </pre>
+          )}
+        </div>
+
+        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
+          <a href="/" style={{ textDecoration: "underline" }}>
+            Go to /
+          </a>
+          <a href="/directory" style={{ textDecoration: "underline" }}>
+            Try /directory again
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>Authed ✅</h2>
+      <div style={{ marginBottom: 12 }}>
+        <b>Current path:</b> {location.pathname}
+      </div>
+      {raw && (
+        <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+          {JSON.stringify(raw, null, 2)}
+        </pre>
+      )}
+      <Outlet />
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -9,16 +123,33 @@ export default function App() {
         element={
           <div style={{ padding: 24 }}>
             <h1>App mounted ✅</h1>
+            <p>Try <code>/directory</code> to run the session check.</p>
           </div>
         }
       />
 
+      {/* Route group protected by the session check */}
+      <Route element={<ProtectedLayout />}>
+        <Route
+          path="/directory"
+          element={
+            <div>
+              <h1>Directory route reached ✅</h1>
+              <Directory />
+            </div>
+          }
+        />
+      </Route>
+
+      {/* Simple fallback for testing */}
       <Route
-        path="/directory"
+        path="*"
         element={
           <div style={{ padding: 24 }}>
-            <h1>Directory route reached ✅</h1>
-            <Directory />
+            <h1>404</h1>
+            <p>
+              Go to <a href="/">/</a> or <a href="/directory">/directory</a>
+            </p>
           </div>
         }
       />
