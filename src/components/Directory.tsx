@@ -5,6 +5,7 @@ import { NetworkGraph } from "../components/NetworkGraph";
 import { SearchBar } from "../components/SearchBar";
 import { ProfileCard } from "../components/ProfileCard";
 import { ProfileDetail } from "../components/ProfileDetail";
+import { SignOutButton } from "../components/SignOutButton";
 import { Network, Users, List } from "lucide-react";
 
 import { fetchPublicGoogleSheet } from "../queries/googleSheets";
@@ -204,31 +205,31 @@ export function Directory() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
 
         {/* View Toggle */}
-        <div className="segmented-control fixed bottom-4 left-1/2 z-100 -translate-x-1/2 flex backdrop-blur-lg">
+        <div className="segmented-control fixed bottom-4 left-1/2 z-100 -translate-x-1/2 flex items-center gap-2 backdrop-blur-lg">
           <button
             onClick={() => setViewMode("list")}
-            className={`segmented-button cursor-pointer ${
-              viewMode === "list"
-                ? "active"
-                : ""
-            }`}
+            className={`segmented-button cursor-pointer ${viewMode === "list" ? "active" : ""}`}
           >
             <List className="w-4 h-4" />
             List
           </button>
+
           <button
             onClick={() => setViewMode("graph")}
-            className={`segmented-button cursor-pointer ${
-              viewMode === "graph"
-                ? "active"
-                : ""
-            }`}
+            className={`segmented-button cursor-pointer ${viewMode === "graph" ? "active" : ""}`}
           >
             <Network className="w-4 h-4" />
             Graph
           </button>
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-white/15 mx-1" />
+
+          {/* Sign out (uses same segmented-button styling) */}
+          <SignOutButton />
         </div>
-      </div>
+        </div>
+
 
       {/* Search Bar */}
       <div>

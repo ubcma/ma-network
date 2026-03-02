@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn, ArrowLeft, ArrowUpRight } from "lucide-react";
+import { LogIn, ArrowLeft, ArrowUpRight, Frown } from "lucide-react";
+
 
 import Spinner from "../common/Spinner";
 import { RenderInputField } from "../forms/FormComponents";
@@ -18,6 +19,8 @@ import { validateEmail } from "../../lib/better-auth/validate-email";
 export default function SignInForm() {
   const [step, setStep] = useState<"email" | "password" | "google">("email");
   const [email, setEmail] = useState("");
+
+  const frontendSignUp = import.meta.env?.VITE_PORTAL_SIGN_UP;
 
   const emailForm = useForm({
     defaultValues: { email: "" },
@@ -198,16 +201,15 @@ export default function SignInForm() {
 
               <div className="gap-1 font-normal text-sm">
                 New here?{" "}
-                <Link
-                  to="/sign-up"
+                <a
+                  href={frontendSignUp}
                   className="text-ma-red font-semibold hover:underline inline-flex flex-row items-center"
+                  target="_self"
+                  rel="noopener noreferrer"
                 >
                   Sign Up
-                  <ArrowUpRight
-                    size={16}
-                    className="inline border"
-                  />
-                </Link>
+                  <ArrowUpRight size={16} className="inline" />
+                </a>
               </div>
             </motion.div>
           </motion.div>
