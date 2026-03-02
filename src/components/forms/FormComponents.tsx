@@ -1,5 +1,5 @@
 // components/forms/FormComponents.tsx (Extended version)
-import { AnyFieldApi } from '@tanstack/react-form';
+import type {AnyFieldApi} from '@tanstack/react-form';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import {

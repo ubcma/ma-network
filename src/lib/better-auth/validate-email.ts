@@ -1,7 +1,7 @@
 'use server'
 
 import { fetchFromAPI } from '../httpHandlers';
-import { ValidateEmailResponse } from '../types/validate-email';
+import type { ValidateEmailResponse } from '../types/validate-email';
 
 export async function validateEmail(email: string) {
   const response = await fetchFromAPI('/api/validate-email', {

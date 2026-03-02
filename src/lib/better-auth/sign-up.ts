@@ -11,7 +11,7 @@ export const signUpWithEmail = async (
       email,
       password,
       name,
-      callbackURL: `${process.env.VITE_FRONTEND_URL}/home`, // This needs to be either /home or /onboarding based on whether the user is new or not. If onboarding isn't complete does it automatically redirect or no?
+      callbackURL: `${import.meta.env?.VITE_FRONTEND_URL}/directory`, 
     },
     {
       onRequest: (ctx) => {

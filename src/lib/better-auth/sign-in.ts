@@ -3,14 +3,14 @@ import { toast } from 'sonner';
 import { handleServerError } from '../error/handleServer';
 
 export const signInWithGoogle = async () => {
-  const frontendBaseURL = process.env.VITE_FRONTEND_URL;
+  const frontendBaseURL = import.meta.env?.VITE_FRONTEND_URL;
 
   const response = await authClient.signIn.social(
     {
       provider: 'google',
-      callbackURL: `${frontendBaseURL}/home`,
+      callbackURL: `${frontendBaseURL}/directory`,
       errorCallbackURL: `${frontendBaseURL}/error`,
-      newUserCallbackURL: `${frontendBaseURL}/home`,
+      newUserCallbackURL: `${frontendBaseURL}/directory`,
     }
   );
 
@@ -29,13 +29,13 @@ export const signInWithGoogle = async () => {
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
-    const frontendBaseURL = process.env.VITE_FRONTEND_URL;
+    const frontendBaseURL = import.meta.env?.VITE_FRONTEND_URL;
 
   const response = await authClient.signIn.email(
     {
       email,
       password,
-      callbackURL: frontendBaseURL + '/home',
+      callbackURL: frontendBaseURL + '/directory',
       rememberMe: true,
     },
     {

@@ -1,9 +1,10 @@
 // src/App.tsx
 import * as React from "react";
-import { Routes, Route, Outlet, useLocation } from "react-router-dom";
+import { Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
 import { Directory } from "./components/Directory";
+import SignInPage from "./pages/(auth)/sign-in/page";
 
-function ProtectedLayout() { // block if not authed by ubcma portal!!! otherwise show the content (Outlet)
+function ProtectedLayout() {
   const location = useLocation();
   const [loading, setLoading] = React.useState(true);
   const [authed, setAuthed] = React.useState<boolean | null>(null);
@@ -28,7 +29,6 @@ function ProtectedLayout() { // block if not authed by ubcma portal!!! otherwise
         try {
           data = text ? JSON.parse(text) : null;
         } catch {
-          // If backend is unreachable or proxy missing, you might get HTML
           data = { _nonJson: text?.slice(0, 400) };
         }
 
@@ -66,54 +66,82 @@ function ProtectedLayout() { // block if not authed by ubcma portal!!! otherwise
     );
   }
 
-  // TEMP: do NOT redirect. Show the result 
   if (!authed) {
     return (
       <div style={{ padding: 24 }}>
+        <Navigate
+          to="/sign-in"
+          replace
+          state={{ returnTo: location.pathname + location.search }}
+        />
+        {/* Optional debug */}
         <h2>Not authed ❌</h2>
-        <div style={{ marginTop: 12 }}>
+        {err && (
           <div>
-            <b>Current path:</b> {location.pathname}
+            <b>Error:</b> {err}
           </div>
-          {err && (
-            <div>
-              <b>Error:</b> {err}
-            </div>
-          )}
-          {raw && (
-            <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-              {JSON.stringify(raw, null, 2)}
-            </pre>
-          )}
-        </div>
-
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <a href="/" style={{ textDecoration: "underline" }}>
-            Go to /
-          </a>
-          <a href="/directory" style={{ textDecoration: "underline" }}>
-            Try /directory again
-          </a>
-        </div>
+        )}
+        {raw && (
+          <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+            {JSON.stringify(raw, null, 2)}
+          </pre>
+        )}
       </div>
     );
   }
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2>Authed ✅</h2>
-      <div style={{ marginBottom: 12 }}>
-        <b>Current path:</b> {location.pathname}
-      </div>
-      {raw && (
-        <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-          {JSON.stringify(raw, null, 2)}
-        </pre>
-      )}
-      <Outlet />
-    </div>
-  );
+  // Allows /directory to render if authed! (child components can also access session data via /api/auth/get-session)
+  return <Outlet />;
 }
+
+//   // TEMP: do NOT redirect. Show the result
+//   if (!authed) {
+//     return (
+//       <div style={{ padding: 24 }}>
+//         <h2>Not authed ❌</h2>
+//         <div style={{ marginTop: 12 }}>
+//           <div>
+//             <b>Current path:</b> {location.pathname}
+//           </div>
+//           {err && (
+//             <div>
+//               <b>Error:</b> {err}
+//             </div>
+//           )}
+//           {raw && (
+//             <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+//               {JSON.stringify(raw, null, 2)}
+//             </pre>
+//           )}
+//         </div>
+
+//         <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
+//           <a href="/" style={{ textDecoration: "underline" }}>
+//             Go to /
+//           </a>
+//           <a href="/directory" style={{ textDecoration: "underline" }}>
+//             Try /directory again
+//           </a>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div style={{ padding: 24 }}>
+//       <h2>Authed ✅</h2>
+//       <div style={{ marginBottom: 12 }}>
+//         <b>Current path:</b> {location.pathname}
+//       </div>
+//       {raw && (
+//         <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+//           {JSON.stringify(raw, null, 2)}
+//         </pre>
+//       )}
+//       <Outlet />
+//     </div>
+//   );
+// }
 
 export default function App() {
   return (
@@ -123,12 +151,16 @@ export default function App() {
         element={
           <div style={{ padding: 24 }}>
             <h1>App mounted ✅</h1>
-            <p>Try <code>/directory</code> to run the session check.</p>
+            <p>
+              Try <code>/directory</code> to run the session check.
+            </p>
           </div>
         }
       />
 
-      {/* Route group protected by the session check */}
+      <Route path="/sign-in" element={<SignInPage />} />
+
+      {/* PROTECTED BY CHECK */}
       <Route element={<ProtectedLayout />}>
         <Route
           path="/directory"

@@ -4,7 +4,7 @@ import { api } from "./api";
 import { createAuthClient } from "better-auth/client";
 
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:8080", // e.g. "http://localhost:8080"
+  baseURL: import.meta.env?.VITE_BACKEND_URL,
   fetchOptions: { credentials: "include" },
 });
 

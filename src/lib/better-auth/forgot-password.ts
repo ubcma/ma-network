@@ -5,7 +5,7 @@ import { handleServerError } from '../error/handleServer';
 export const sendForgotPasswordEmail = async (email: string) => {
   const { data, error } = await authClient.forgetPassword({
     email,
-    redirectTo: `${process.env.VITE_FRONTEND_URL}/reset-password`,
+    redirectTo: `${import.meta.env?.VITE_FRONTEND_URL}/reset-password`,
   });
 
   if (error) {
