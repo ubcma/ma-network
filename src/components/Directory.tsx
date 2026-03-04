@@ -1,21 +1,22 @@
 import { useState, useMemo, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { NetworkGraph } from "@/components/NetworkGraph";
-import { SearchBar } from "@/components/SearchBar";
-import { ProfileCard } from "@/components/ProfileCard";
-import { ProfileDetail } from "@/components/ProfileDetail";
+import { Button } from "../components/ui/button";
+import { Spinner } from "../components/ui/spinner";
+import { NetworkGraph } from "../components/NetworkGraph";
+import { SearchBar } from "../components/SearchBar";
+import { ProfileCard } from "../components/ProfileCard";
+import { ProfileDetail } from "../components/ProfileDetail";
+import { SignOutButton } from "../components/SignOutButton";
 import { Network, Users, List } from "lucide-react";
 
-import { fetchPublicGoogleSheet } from "@/queries/googleSheets";
-import { googleSheetToProfiles } from "@/utils/googleSheetToProfiles";
-import type { NetworkProfile } from "@/utils/networkProfileUtils";
+import { fetchPublicGoogleSheet } from "../queries/googleSheets";
+import { googleSheetToProfiles } from "../utils/googleSheetToProfiles";
+import type { NetworkProfile } from "../utils/networkProfileUtils";
 
 import {
   generateGraphData,
   searchProfiles,
   type GraphNode,
-} from "@/utils/graphUtils";
+} from "../utils/graphUtils";
 
 function uniqSorted(values: string[]) {
   return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort(
@@ -204,31 +205,31 @@ export function Directory() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
 
         {/* View Toggle */}
-        <div className="segmented-control fixed bottom-4 left-1/2 z-100 -translate-x-1/2 flex backdrop-blur-lg">
+        <div className="segmented-control fixed bottom-4 left-1/2 z-100 -translate-x-1/2 flex items-center gap-2 backdrop-blur-lg">
           <button
             onClick={() => setViewMode("list")}
-            className={`segmented-button cursor-pointer ${
-              viewMode === "list"
-                ? "active"
-                : ""
-            }`}
+            className={`segmented-button cursor-pointer ${viewMode === "list" ? "active" : ""}`}
           >
             <List className="w-4 h-4" />
             List
           </button>
+
           <button
             onClick={() => setViewMode("graph")}
-            className={`segmented-button cursor-pointer ${
-              viewMode === "graph"
-                ? "active"
-                : ""
-            }`}
+            className={`segmented-button cursor-pointer ${viewMode === "graph" ? "active" : ""}`}
           >
             <Network className="w-4 h-4" />
             Graph
           </button>
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-white/15 mx-1" />
+
+          {/* Sign out (uses same segmented-button styling) */}
+          <SignOutButton />
         </div>
-      </div>
+        </div>
+
 
       {/* Search Bar */}
       <div>

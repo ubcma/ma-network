@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import ReactFlow, {
   type Node,
   type Edge,
@@ -24,6 +24,12 @@ interface NetworkGraphProps {
 }
 
 function PersonNode({ data }: NodeProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [data.photo]);
+
   return (
     <div style={{ position: "relative" }}>
       <Handle type="source" position={Position.Top} />
@@ -39,10 +45,13 @@ function PersonNode({ data }: NodeProps) {
           backgroundColor: data.color,
         }}
       >
-        {data.photo ? (
+        {data.photo && !imageFailed ? (
           <img
             src={data.photo}
             alt={data.label}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
             style={{
               width: "100%",
               height: "100%",
