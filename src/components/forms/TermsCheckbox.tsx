@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 
 type TermsCheckboxProps = {
@@ -27,21 +26,23 @@ export default function TermsCheckbox({ onChange }: TermsCheckboxProps) {
       />
       <label htmlFor="terms" className="text-sm text-gray-600 leading-5">
         I agree to the{' '}
-        <Link
+        <a
           href="/terms-of-service"
           target="_blank"
+          rel="noopener noreferrer"
           className="underline text-red-600 hover:text-red-800"
         >
           Terms of Service
-        </Link>{' '}
+        </a>{' '}
         and{' '}
-        <Link
+        <a
           href="/privacy-policy"
           target="_blank"
+          rel="noopener noreferrer"
           className="underline text-red-600 hover:text-red-800"
         >
           Privacy Policy
-        </Link>
+        </a>
         .
       </label>
     </div>
