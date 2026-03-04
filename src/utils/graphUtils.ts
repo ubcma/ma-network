@@ -34,7 +34,7 @@ export const generateGraphData = (profiles: NetworkProfile[]): GraphData => {
     const id = new URLSearchParams(
       new URL(profile.profile_photo_url ?? "", window.location.href).search
     ).get("id");
-    const photoUrl = `https://drive.google.com/thumbnail?id=${id}`;
+    const photoUrl = id ? `https://drive.google.com/thumbnail?id=${id}` : undefined;
 
     nodes.push({
       id: profile.id,

@@ -75,7 +75,7 @@ export function RenderInputField({
         }
         type={type}
         placeholder={placeholder ?? label}
-        className={`bg-white ${isMobile ? 'h-9 text-sm' : 'h-10'}`}
+        className={`bg-white text-neutral-900 placeholder:text-neutral-400 ${isMobile ? 'h-9 text-sm' : 'h-10'}`}
       />
       <FieldInfo field={field} />
     </div>
@@ -122,8 +122,6 @@ export function RenderSelectField({
   disabled?: boolean;
   labelClassName?: string;
 }) {
-  const isMobile = useIsMobile();
-  
   return (
     <div className="flex flex-col gap-2 w-full">
       <Label htmlFor={field.name} className={labelClassName}>{label}</Label>

@@ -2,14 +2,13 @@
 import * as React from "react";
 import { Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
 import { Directory } from "./components/Directory";
+import { Spinner } from "./components/ui/spinner";
 import SignInPage from "./pages/(auth)/sign-in/page";
 
 function ProtectedLayout() {
   const location = useLocation();
   const [loading, setLoading] = React.useState(true);
   const [authed, setAuthed] = React.useState<boolean | null>(null);
-  const [raw, setRaw] = React.useState<any>(null);
-  const [err, setErr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -25,27 +24,18 @@ function ProtectedLayout() {
 
         const text = await res.text();
 
-        let data: any = null;
+        let data: { user?: unknown } | null = null;
         try {
           data = text ? JSON.parse(text) : null;
         } catch {
-          data = { _nonJson: text?.slice(0, 400) };
+          data = null;
         }
 
         if (cancelled) return;
 
-        setRaw({
-          url: "/api/auth/get-session",
-          status: res.status,
-          ok: res.ok,
-          contentType: res.headers.get("content-type"),
-          data,
-        });
-
         setAuthed(!!data?.user);
-      } catch (e: any) {
+      } catch {
         if (cancelled) return;
-        setErr(e?.message ?? String(e));
         setAuthed(false);
       } finally {
         if (!cancelled) setLoading(false);
@@ -59,34 +49,21 @@ function ProtectedLayout() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24 }}>
-        <h2>ProtectedLayout</h2>
-        <div>Loading session…</div>
+      <div className="app-shell">
+        <div className="app-container min-h-screen flex items-center justify-center">
+          <Spinner className="size-6 text-(--brand)" />
+        </div>
       </div>
     );
   }
 
   if (!authed) {
     return (
-      <div style={{ padding: 24 }}>
-        <Navigate
-          to="/sign-in"
-          replace
-          state={{ returnTo: location.pathname + location.search }}
-        />
-        {/* Optional debug */}
-        <h2>Not authed ❌</h2>
-        {err && (
-          <div>
-            <b>Error:</b> {err}
-          </div>
-        )}
-        {raw && (
-          <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-            {JSON.stringify(raw, null, 2)}
-          </pre>
-        )}
-      </div>
+      <Navigate
+        to="/sign-in"
+        replace
+        state={{ returnTo: location.pathname + location.search }}
+      />
     );
   }
 
@@ -155,8 +132,29 @@ export default function App() {
         <Route
           path="/directory"
           element={
-            <div>
-              <Directory />
+            <div className="app-shell">
+              <div className="app-container">
+                <div className="mx-auto w-full max-w-6xl">
+                  <div className="flex flex-col gap-10">
+                    <header className="flex flex-col gap-6 -mb-8">
+                      <div className="brand-pill w-fit">UBC Marketing Association</div>
+                      <div className="flex flex-col gap-4">
+                        <h1 className="hero-title text-2xl md:text-4xl hero-glow">
+                          MA Mentorship Hub
+                        </h1>
+                        <p className="subtitle text-base md:text-md max-w-2xl">
+                          A directory of UBCMA executives and alumni to facilitate connection
+                          and career development across multiple generations of UBC's marketing
+                          association.
+                        </p>
+                      </div>
+                    </header>
+                    <main className="transition-all duration-300">
+                      <Directory />
+                    </main>
+                  </div>
+                </div>
+              </div>
             </div>
           }
         />
