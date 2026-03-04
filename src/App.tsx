@@ -146,17 +146,7 @@ function ProtectedLayout() {
 export default function App() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <div style={{ padding: 24 }}>
-            <h1>App mounted ✅</h1>
-            <p>
-              Try <code>/directory</code> to run the session check.
-            </p>
-          </div>
-        }
-      />
+      <Route path="/" element={<Navigate to="/directory" replace />} />
 
       <Route path="/sign-in" element={<SignInPage />} />
 
@@ -166,7 +156,6 @@ export default function App() {
           path="/directory"
           element={
             <div>
-              <h1>Directory route reached ✅</h1>
               <Directory />
             </div>
           }
