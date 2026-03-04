@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn, ArrowLeft, ArrowUpRight, Frown } from "lucide-react";
+import { LogIn, ArrowLeft, ArrowUpRight} from "lucide-react";
+import logoRed from '../../assets/logos/logo_red.svg'
+
 
 
 import Spinner from "../common/Spinner";
@@ -20,7 +21,7 @@ export default function SignInForm() {
   const [step, setStep] = useState<"email" | "password" | "google">("email");
   const [email, setEmail] = useState("");
 
-  const frontendSignUp = import.meta.env?.VITE_PORTAL_SIGN_UP;
+  const portal_origin = import.meta.env.VITE_PORTAL_ORIGIN ?? "";
 
   const emailForm = useForm({
     defaultValues: { email: "" },
@@ -57,6 +58,8 @@ export default function SignInForm() {
 
   const handleGoBack = () => {
     setStep("email");
+    setEmail("");
+    emailForm.reset();
     passwordForm.reset();
   };
 
@@ -104,9 +107,8 @@ export default function SignInForm() {
             transition={fadeTransition}
             className="flex flex-col gap-6 place-items-center text-center"
           >
-            {/* ✅ Vite public asset */}
             <img
-              src="/logos/logo_red.svg"
+              src={logoRed}
               width={128}
               height={128}
               alt="UBC MA Logo"
@@ -118,7 +120,7 @@ export default function SignInForm() {
               transition={{ delay: 0.1 }}
             >
               <AuthCardHeader
-                heading="Welcome to the MA Portal"
+                heading="Welcome to the UBCMA Network"
                 subheading="Enter your email to sign in"
               />
             </motion.div>
@@ -142,22 +144,21 @@ export default function SignInForm() {
                   validators={{
                     onBlur: ({ value }) =>
                       !value
-                        ? "Email is required."
+                        ? 'Email is required.'
                         : !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(
-                              value,
+                              value
                             )
-                          ? "Invalid email address."
+                          ? 'Invalid email address.'
                           : undefined,
                   }}
-                >
-                  {(field) => (
+                  children={(field) => (
                     <RenderInputField
                       type="email"
                       label="Email"
                       field={field}
                     />
                   )}
-                </emailForm.Field>
+                />
 
                 <emailForm.Subscribe
                   selector={(state) => [state.canSubmit, state.isSubmitting]}
@@ -199,16 +200,16 @@ export default function SignInForm() {
 
               <GoogleSignInButton />
 
-              <div className="gap-1 font-normal text-sm">
+
+              <div className="text-sm text-foreground/80">
                 New here?{" "}
                 <a
-                  href={frontendSignUp}
-                  className="text-ma-red font-semibold hover:underline inline-flex flex-row items-center"
+                  href={`${portal_origin}/sign-up`}
+                  className="text-ma-red font-semibold hover:underline inline-flex items-center gap-1"
                   target="_self"
                   rel="noopener noreferrer"
                 >
-                  Sign Up
-                  <ArrowUpRight size={16} className="inline" />
+                  Sign Up <ArrowUpRight size={16} />
                 </a>
               </div>
             </motion.div>
@@ -279,12 +280,14 @@ export default function SignInForm() {
                 transition={{ delay: 0.25 }}
                 className="text-right"
               >
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-ma-red hover:underline"
+                <a
+                  href={`${portal_origin}/forgot-password`}
+                  className="text-ma-red font-semibold hover:underline inline-flex flex-row items-center"
+                  target="_self"
                 >
                   Forgot password?
-                </Link>
+
+                </a>
               </motion.div>
 
               <motion.div

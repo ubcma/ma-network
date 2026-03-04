@@ -9,7 +9,7 @@ import Spinner from "../common/Spinner";
 import AuthCardHeader from "../auth/AuthCardHeader";
 import { RenderInputField } from "../../components/forms/FormComponents";
 
-// ✅ Vite-friendly: use relative imports unless you configured "@/..."
+
 import { Button } from "../ui/button";
 import { resetPassword } from "../../lib/better-auth/forgot-password";
 import { handleClientError } from "../../lib/error/handleClient";
