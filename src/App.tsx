@@ -3,6 +3,7 @@ import * as React from "react";
 import { Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
 import { Directory } from "./components/Directory";
 import { Spinner } from "./components/ui/spinner";
+import { getSession } from "./lib/auth-client";
 import SignInPage from "./pages/(auth)/sign-in/page";
 
 function ProtectedLayout() {
@@ -15,21 +16,7 @@ function ProtectedLayout() {
 
     (async () => {
       try {
-        const res = await fetch("/api/auth/get-session", {
-          method: "GET",
-          credentials: "include",
-          headers: { Accept: "application/json" },
-          cache: "no-store",
-        });
-
-        const text = await res.text();
-
-        let data: { user?: unknown } | null = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch {
-          data = null;
-        }
+        const data = await getSession();
 
         if (cancelled) return;
 

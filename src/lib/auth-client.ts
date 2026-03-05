@@ -8,6 +8,10 @@ export const authClient = createAuthClient({
   fetchOptions: { credentials: "include" },
 });
 
+type SessionResponse = {
+  user?: unknown;
+} | null;
+
 export async function signInEmail(email: string, password: string) {
   return api("/api/auth/sign-in/email", {
     method: "POST",
@@ -22,7 +26,7 @@ export async function signOut() {
 
 export async function getSession() {
   try {
-    return await api("/api/auth/get-session", { method: "GET" });
+    return await api<SessionResponse>("/api/auth/get-session", { method: "GET" });
   } catch {
     return null;
   }
