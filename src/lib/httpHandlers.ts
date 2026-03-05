@@ -18,8 +18,6 @@ export async function fetchFromAPI(endpoint: string, options: FetchOptions = {})
     ...customHeaders,
   };
 
-  console.log("Fetching from API:", { endpoint, method, body, headers, credentials });
-
   const res = await fetch(`${import.meta.env?.VITE_BACKEND_URL}${endpoint}`, {
     method,
     headers,
