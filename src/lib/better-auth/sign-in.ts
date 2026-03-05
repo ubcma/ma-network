@@ -2,15 +2,17 @@ import { authClient } from '@/lib/auth-client';
 import { toast } from 'sonner';
 import { handleServerError } from '../error/handleServer';
 
+const getFrontendBaseURL = () => window.location.origin;
+
 export const signInWithGoogle = async () => {
-  const frontendBaseURL = import.meta.env?.VITE_FRONTEND_URL;
+  const frontendBaseURL = getFrontendBaseURL();
 
   const response = await authClient.signIn.social(
     {
       provider: 'google',
-      callbackURL: `${frontendBaseURL}/directory`, 
-      errorCallbackURL: `${frontendBaseURL}/error`,
-      newUserCallbackURL: `${frontendBaseURL}/directory`,
+      callbackURL: `${frontendBaseURL}/`,
+      errorCallbackURL: `${frontendBaseURL}/sign-in`,
+      newUserCallbackURL: `${frontendBaseURL}/`,
     }
   );
 
@@ -29,13 +31,13 @@ export const signInWithGoogle = async () => {
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
-    const frontendBaseURL = import.meta.env?.VITE_FRONTEND_URL;
+    const frontendBaseURL = getFrontendBaseURL();
 
   const response = await authClient.signIn.email(
     {
       email,
       password,
-      callbackURL: frontendBaseURL + '/directory',
+      callbackURL: frontendBaseURL + '/',
       rememberMe: true,
     },
     {
