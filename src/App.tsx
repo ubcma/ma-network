@@ -8,6 +8,31 @@ import { getSession } from "./lib/auth-client";
 import { getUserRole } from "./lib/get-user-role";
 import SignInPage from "./pages/(auth)/sign-in/page";
 
+function GuestLayout() {
+  const sessionQuery = useQuery({
+    queryKey: ["session"],
+    queryFn: getSession,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  if (sessionQuery.isPending) {
+    return (
+      <div className="app-shell">
+        <div className="app-container min-h-screen flex items-center justify-center">
+          <Spinner className="size-6 text-(--brand)" />
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionQuery.data?.user) {
+    return <Navigate to="/directory" replace />;
+  }
+
+  return <Outlet />;
+}
+
 function ProtectedLayout() {
   const location = useLocation();
   const sessionQuery = useQuery({
@@ -100,7 +125,9 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/directory" replace />} />
 
-      <Route path="/sign-in" element={<SignInPage />} />
+      <Route element={<GuestLayout />}>
+        <Route path="/sign-in" element={<SignInPage />} />
+      </Route>
 
       {/* PROTECTED BY CHECK */}
       <Route element={<ProtectedLayout />}>

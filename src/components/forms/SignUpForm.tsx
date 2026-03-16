@@ -10,30 +10,8 @@ import AuthCardHeader from "../auth/AuthCardHeader";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
-
-// --- minimal API helpers ---
-async function signUpWithEmail(name: string, email: string, password: string) {
-  const res = await fetch("/api/auth/sign-up/email", {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ name, email, password }),
-  });
-
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.message ?? "Sign up failed");
-  return data;
-}
-
-async function getSession() {
-  const res = await fetch("/api/auth/get-session", {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
-  return res.json().catch(() => null);
-}
+import { signUpWithEmail } from "@/lib/better-auth/sign-up";
+import { getSession } from "@/lib/auth-client";
 
 export default function SignUpForm() {
   const navigate = useNavigate();
@@ -101,7 +79,7 @@ export default function SignUpForm() {
 
     const checkVerificationStatus = async () => {
       try {
-        const session = await getSession();
+        const session = await getSession() as { user?: { emailVerified?: boolean } } | null;
         if (cancelled) return;
 
         if (session?.user?.emailVerified) {
