@@ -62,7 +62,9 @@ function ProtectedLayout() {
               Please purchase a membership on the UBCMA membership portal to access this feature.
             </p>
             <a
-              href={portal_origin}
+              href={'https://app.ubcma.ca'}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-xs bg-(--brand) px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
             >
               Visit the Membership Portal
