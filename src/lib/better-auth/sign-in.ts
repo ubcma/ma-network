@@ -4,20 +4,34 @@ import { handleServerError } from '../error/handleServer';
 
 const getFrontendBaseURL = () => window.location.origin;
 
-export const signInWithGoogle = async () => {
+const isRestartProcessError = (message?: string) =>
+  (message ?? "").toLowerCase().includes("please_restart_the_process");
+
+const beginGoogleOAuth = async () => {
   const frontendBaseURL = getFrontendBaseURL();
 
-  const response = await authClient.signIn.social(
-    {
-      provider: 'google',
-      callbackURL: `${frontendBaseURL}/`,
-      errorCallbackURL: `${frontendBaseURL}/sign-in`,
-      newUserCallbackURL: `${frontendBaseURL}/`,
-    }
-  );
+  return authClient.signIn.social({
+    provider: "google",
+    callbackURL: `${frontendBaseURL}/`,
+    errorCallbackURL: `${frontendBaseURL}/sign-in`,
+    newUserCallbackURL: `${frontendBaseURL}/`,
+  });
+};
+
+export const signInWithGoogle = async () => {
+  let response = await beginGoogleOAuth();
+
+  // This error is usually a stale/expired OAuth state; one fresh retry often resolves it.
+  if (response.error && isRestartProcessError(response.error.message)) {
+    response = await beginGoogleOAuth();
+  }
 
   if (response.error) {
-    handleServerError('Error signing in with Google, please contact our team for support');
+    if (isRestartProcessError(response.error.message)) {
+      toast.error("Sign-in session expired. Please try Google sign-in again.");
+    } else {
+      handleServerError("Error signing in with Google, please contact our team for support");
+    }
     throw new Error(response.error.message);
   }
 

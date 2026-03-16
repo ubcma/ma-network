@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import { signOut } from "../lib/better-auth/sign-out";
 
 export function SignOutButton() {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     if (loading) return;
@@ -14,7 +12,8 @@ export function SignOutButton() {
     try {
       setLoading(true);
       await signOut();
-      navigate("/", { replace: true });
+      // Force a full navigation so session/cookies are re-evaluated immediately.
+      window.location.assign("/sign-in");
     } catch (e) {
       console.error("Sign out failed", e);
     } finally {

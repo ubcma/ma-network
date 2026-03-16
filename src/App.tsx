@@ -1,38 +1,35 @@
 // src/App.tsx
-import * as React from "react";
 import { Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Directory } from "./components/Directory";
 import { Spinner } from "./components/ui/spinner";
+import { SignOutButton } from "./components/SignOutButton";
 import { getSession } from "./lib/auth-client";
+import { getUserRole } from "./lib/get-user-role";
 import SignInPage from "./pages/(auth)/sign-in/page";
 
 function ProtectedLayout() {
   const location = useLocation();
-  const [loading, setLoading] = React.useState(true);
-  const [authed, setAuthed] = React.useState<boolean | null>(null);
+  const sessionQuery = useQuery({
+    queryKey: ["session"],
+    queryFn: getSession,
+    staleTime: 60_000,
+    retry: 1,
+  });
 
-  React.useEffect(() => {
-    let cancelled = false;
+  const isAuthed = !!sessionQuery.data?.user;
 
-    (async () => {
-      try {
-        const data = await getSession();
+  const portal_origin = import.meta.env?.VITE_PORTAL_ORIGIN ?? "";
 
-        if (cancelled) return;
+  const roleQuery = useQuery({
+    queryKey: ["user-role"],
+    queryFn: getUserRole,
+    enabled: isAuthed,
+    staleTime: 60_000,
+    retry: 1,
+  });
 
-        setAuthed(!!data?.user);
-      } catch {
-        if (cancelled) return;
-        setAuthed(false);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const loading = sessionQuery.isPending || (isAuthed && roleQuery.isPending);
 
   if (loading) {
     return (
@@ -44,7 +41,7 @@ function ProtectedLayout() {
     );
   }
 
-  if (!authed) {
+  if (!isAuthed) {
     return (
       <Navigate
         to="/sign-in"
@@ -54,58 +51,49 @@ function ProtectedLayout() {
     );
   }
 
+  if (roleQuery.data === "Basic") {
+    return (
+      <div className="app-shell">
+        <div className="app-container min-h-screen flex items-center justify-center px-4">
+          <div className="glass-panel rounded-xs max-w-xl w-full p-8 text-center space-y-4">
+            <div className="brand-pill w-fit mx-auto">UBC Marketing Association</div>
+            <h1 className="hero-title text-xl md:text-2xl">This feature is only available for members.</h1>
+            <p className="subtitle text-sm md:text-base">
+              Please purchase a membership on the UBCMA membership portal to access this feature.
+            </p>
+            <a
+              href={portal_origin}
+              className="inline-flex items-center justify-center rounded-xs bg-(--brand) px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+            >
+              Visit the Membership Portal
+            </a>
+            <div className="flex justify-center pt-1">
+              <SignOutButton />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (roleQuery.isError) {
+    return (
+      <div className="app-shell">
+        <div className="app-container min-h-screen flex items-center justify-center px-4">
+          <div className="glass-panel rounded-xs max-w-xl w-full p-8 text-center space-y-4">
+            <h1 className="hero-title text-xl md:text-2xl">Couldn’t Verify Access</h1>
+            <p className="subtitle text-sm md:text-base">
+              We couldn’t verify your role right now. Please refresh and try again.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Allows /directory to render if authed! (child components can also access session data via /api/auth/get-session)
   return <Outlet />;
 }
-
-//   // TEMP: do NOT redirect. Show the result
-//   if (!authed) {
-//     return (
-//       <div style={{ padding: 24 }}>
-//         <h2>Not authed ❌</h2>
-//         <div style={{ marginTop: 12 }}>
-//           <div>
-//             <b>Current path:</b> {location.pathname}
-//           </div>
-//           {err && (
-//             <div>
-//               <b>Error:</b> {err}
-//             </div>
-//           )}
-//           {raw && (
-//             <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-//               {JSON.stringify(raw, null, 2)}
-//             </pre>
-//           )}
-//         </div>
-
-//         <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-//           <a href="/" style={{ textDecoration: "underline" }}>
-//             Go to /
-//           </a>
-//           <a href="/directory" style={{ textDecoration: "underline" }}>
-//             Try /directory again
-//           </a>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div style={{ padding: 24 }}>
-//       <h2>Authed ✅</h2>
-//       <div style={{ marginBottom: 12 }}>
-//         <b>Current path:</b> {location.pathname}
-//       </div>
-//       {raw && (
-//         <pre style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-//           {JSON.stringify(raw, null, 2)}
-//         </pre>
-//       )}
-//       <Outlet />
-//     </div>
-//   );
-// }
 
 export default function App() {
   return (
