@@ -19,8 +19,6 @@ function ProtectedLayout() {
 
   const isAuthed = !!sessionQuery.data?.user;
 
-  const portal_origin = import.meta.env?.VITE_PORTAL_ORIGIN ?? "";
-
   const roleQuery = useQuery({
     queryKey: ["user-role"],
     queryFn: getUserRole,
