@@ -28,14 +28,10 @@ async function listMajors() {
   });
   const rows = result.data.values;
   if (!rows || rows.length === 0) {
-    console.log('No data found.');
     return;
   }
-  console.log('Name, Major:');
   // Print the name and major of each student.
   rows.forEach((row) => {
-    // Print columns A and E, which correspond to indices 0 and 4.
-    console.log(`${row[0]}, ${row[4]}`);
   });
 }
 

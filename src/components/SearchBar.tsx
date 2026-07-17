@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 
 interface SearchBarProps {
   searchTerm: string;
@@ -18,7 +18,6 @@ interface SearchBarProps {
   setFilterTopic: (value: string) => void;
   filterContactType: string;
   setFilterContactType: (value: string) => void;
-  resultCount: number;
 }
 
 export function SearchBar({
@@ -35,124 +34,158 @@ export function SearchBar({
   setFilterTopic,
   filterContactType,
   setFilterContactType,
-  resultCount
 }: SearchBarProps) {
-  const hasActiveFilters = filterCompany || filterRole || filterTopic || filterContactType;
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const hasActiveFilters = [filterCompany, filterRole, filterTopic, filterContactType].some(
+    (f) => f && f !== 'all'
+  );
 
   const clearAllFilters = () => {
     setSearchTerm('');
-    setFilterCompany('');
-    setFilterRole('');
-    setFilterTopic('');
-    setFilterContactType('');
+    setFilterCompany('all');
+    setFilterRole('all');
+    setFilterTopic('all');
+    setFilterContactType('all');
   };
 
   return (
-    <div className="space-y-4">
-      {/* Main Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <Input
-          type="text"
-          placeholder="Search by name, company, role, or keywords..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-4 py-6 text-base"
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filters:</span>
+    <div className="w-full">
+      <div className="flex items-center gap-2 w-full">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-(--muted-ink) w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Search by name, company, role..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="glass-input pr-8 min-h-10 text-sm focus-visible:ring-(--brand)/30"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-(--muted-ink) hover:text-white bg-white/10 p-0.5 rounded-xs transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <Select value={filterContactType} onValueChange={setFilterContactType}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Members" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Members</SelectItem>
-            <SelectItem value="alumni">Alumni Only</SelectItem>
-            <SelectItem value="exec">Execs Only</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Mobile Filter Toggle */}
+        <Button
+          variant={hasActiveFilters ? "default" : "outline"}
+          className={`glass-input hover:brightness-110 md:hidden min-h-10 px-3 flex items-center gap-2 ${hasActiveFilters ? 'bg-(--brand) text-black hover:bg-(--brand-glow)' : 'border-white/15 text-(--muted-ink)'}`}
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          <span className="text-sm font-medium">Filters</span>
+        </Button>
 
-        <Select value={filterCompany} onValueChange={setFilterCompany}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Companies" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Companies</SelectItem>
-            {companies.map(company => (
-              <SelectItem key={company} value={company}>
-                {company}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Desktop Filters */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
+          <Select value={filterContactType} onValueChange={setFilterContactType}>
+            <SelectTrigger className="glass-input w-[140px] min-h-10">
+              <SelectValue placeholder="All Members" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Members</SelectItem>
+              <SelectItem value="alumni">Alumni Only</SelectItem>
+              <SelectItem value="exec">Execs Only</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={filterRole} onValueChange={setFilterRole}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Roles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            {roles.map(role => (
-              <SelectItem key={role} value={role}>
-                {role}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={filterCompany} onValueChange={setFilterCompany}>
+            <SelectTrigger className="glass-input w-[150px] min-h-10">
+              <SelectValue placeholder="All Companies" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Companies</SelectItem>
+              {companies.map(company => <SelectItem key={company} value={company}>{company}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
-        <Select value={filterTopic} onValueChange={setFilterTopic}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Topics" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Topics</SelectItem>
-            {topics.map(topic => (
-              <SelectItem key={topic} value={topic}>
-                {topic}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="glass-input w-[150px] min-h-10">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllFilters}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Clear All
-          </Button>
-        )}
+          <Select value={filterTopic} onValueChange={setFilterTopic}>
+            <SelectTrigger className="glass-input w-[150px] min-h-10">
+              <SelectValue placeholder="All Topics" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Topics</SelectItem>
+              {topics.map(topic => <SelectItem key={topic} value={topic}>{topic}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          {/* Integrated Desktop Clear Button */}
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              onClick={clearAllFilters}
+              className="min-h-10 px-3 text-(--muted-ink) hover:text-white font-medium"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Results Count */}
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary">
-          {resultCount} {resultCount === 1 ? 'result' : 'results'}
-        </Badge>
-        {hasActiveFilters && (
-          <span className="text-sm text-gray-600">
-            with active filters
-          </span>
-        )}
-      </div>
+      {/* Mobile Dropdown */}
+      {showMobileFilters && (
+        <div className="md:hidden mt-3 p-4 glass-panel rounded-xs space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Select value={filterContactType} onValueChange={setFilterContactType}>
+            <SelectTrigger className="glass-input w-full"><SelectValue placeholder="All Members" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Members</SelectItem>
+              <SelectItem value="alumni">Alumni Only</SelectItem>
+              <SelectItem value="exec">Execs Only</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterCompany} onValueChange={setFilterCompany}>
+            <SelectTrigger className="glass-input w-full"><SelectValue placeholder="All Companies" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Companies</SelectItem>
+              {companies.map(company => <SelectItem key={company} value={company}>{company}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="glass-input w-full"><SelectValue placeholder="All Roles" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterTopic} onValueChange={setFilterTopic}>
+            <SelectTrigger className="glass-input w-full"><SelectValue placeholder="All Topics" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Topics</SelectItem>
+              {topics.map(topic => <SelectItem key={topic} value={topic}>{topic}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          {/* Integrated Mobile Clear Button */}
+          {hasActiveFilters && (
+            <Button 
+              variant="outline" 
+              onClick={clearAllFilters}
+              className="glass-input brightness-110 w-full border-white/15 text-(--muted-ink) mt-4"
+            >
+              Clear all filters
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
