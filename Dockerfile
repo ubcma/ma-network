@@ -10,7 +10,5 @@ FROM base AS dev
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-EXPOSE 3000
-# docker-compose overrides CMD with: pnpm dev --host
-# --host binds Vite to 0.0.0.0 so it's reachable outside the container
+EXPOSE 3001
 CMD ["pnpm", "dev", "--host"]
